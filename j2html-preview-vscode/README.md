@@ -7,7 +7,24 @@ Adds an Xcode-style `▶ Preview` CodeLens above every `@Preview`-annotated meth
 - [Node.js](https://nodejs.org/) 18+
 - [VS Code](https://code.visualstudio.com/) 1.85+
 - [Java](https://adoptium.net/) 17+
+- [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java)
 - [Maven](https://maven.apache.org/) 3.8+ (`mvn` on your `PATH`)
+
+The extension declares `redhat.java` as a dependency and bundles Maven for Java / Project Manager for Java in its extension pack metadata so the expected Java workspace tooling is installed alongside it.
+
+## Settings
+
+- `j2html-preview.cssFiles`: CSS files/globs/URLs to inject into preview output.
+- `j2html-preview.inlineStyles`: Inline CSS appended to preview output.
+- `j2html-preview.buildStrategy`: `java-first` (default) or `maven-first`.
+    - `java-first` tries Java extension APIs first and falls back to Maven commands.
+    - `maven-first` tries Maven commands first and falls back to Java extension APIs.
+- `j2html-preview.debugLogs`: when `true`, logs classpath/build decision paths and fallback reasons.
+
+## Commands
+
+- `j2html: Open Preview` — open or refresh preview for the selected `@Preview` method.
+- `j2html: Show Diagnostics` — opens a markdown report with current settings, active previews, and per-project cache state.
 
 ## Running the extension in development mode
 
@@ -67,6 +84,12 @@ public class MyPreviews {
 
 Open the Java file in the editor — a **▶ Preview** CodeLens appears above the method. Click it to compile the project and render the HTML output in a panel beside the editor.
 
+Once a preview is open:
+
+- saving the preview source file reruns the preview after a short debounce
+- saving configured CSS files rerenders the existing HTML without rerunning Maven or Java
+- changing `pom.xml` invalidates the cached classpath so the next preview refresh resolves dependencies again
+
 ### 5. Iterating quickly
 
 Run the TypeScript compiler in watch mode so recompilation happens on every save:
@@ -79,7 +102,8 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 
 ## How it works
 
-1. **CodeLens** — `PreviewCodeLensProvider` scans the open Java file for `@Preview` annotations and registers a `▶ Preview` lens above each matching method.
-2. **Build** — clicking the lens runs `mvn test-compile -q` in the nearest Maven project root (located by walking up from the current file until a `pom.xml` is found).
-3. **Classpath** — `mvn dependency:build-classpath` resolves all compile + test dependencies into a single classpath string.
+1. **CodeLens** — `PreviewCodeLensProvider` asks VS Code's Java symbol provider for classes and methods, then matches `@Preview` annotations from source text onto those symbols before registering a `▶ Preview` lens for each match.
+2. **Build** — clicking the lens compiles using the configured strategy (`j2html-preview.buildStrategy`): Java extension first or Maven first, with fallback to the other path when needed. The compile step is cached until a Java or `pom.xml` change invalidates it.
+3. **Classpath** — classpath resolution also follows `j2html-preview.buildStrategy`, with fallback between Java extension classpath and Maven dependency classpath. The resolved classpath is cached and recomputed when `pom.xml` changes.
 4. **Run** — `java -cp <classpath> com.teggr.j2html.preview.PreviewRunner <className> <methodName>` is executed and its stdout (the rendered HTML) is displayed in the WebView panel.
+5. **Refresh** — when CSS changes, the extension reuses the last rendered HTML and only reinjects styles into the WebView instead of rerunning the preview method.

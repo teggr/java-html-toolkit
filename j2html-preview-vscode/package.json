@@ -2,8 +2,17 @@
   "name": "j2html-preview",
   "displayName": "j2html Preview",
   "description": "Preview j2html HTML output directly in VS Code by running methods annotated with @Preview",
-  "version": "0.1.4",
+  "version": "0.1.8",
   "publisher": "teggr",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/teggr/j2html-preview.git"
+  },
+  "homepage": "https://github.com/teggr/j2html-preview",
+  "bugs": {
+    "url": "https://github.com/teggr/j2html-preview/issues"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -16,6 +25,13 @@
     "preview",
     "html"
   ],
+  "extensionDependencies": [
+    "redhat.java"
+  ],
+  "extensionPack": [
+    "vscjava.vscode-maven",
+    "vscjava.vscode-java-dependency"
+  ],
   "activationEvents": [
     "onLanguage:java"
   ],
@@ -25,6 +41,10 @@
       {
         "command": "j2html-preview.preview",
         "title": "j2html: Open Preview"
+      },
+      {
+        "command": "j2html-preview.showDiagnostics",
+        "title": "j2html: Show Diagnostics"
       }
     ],
     "configuration": {
@@ -42,6 +62,20 @@
           "type": "string",
           "default": "",
           "description": "Additional CSS to inject inline into all previews (optional)"
+        },
+        "j2html-preview.buildStrategy": {
+          "type": "string",
+          "enum": [
+            "java-first",
+            "maven-first"
+          ],
+          "default": "java-first",
+          "description": "Choose whether preview build/classpath resolution tries Java extension APIs first or Maven commands first."
+        },
+        "j2html-preview.debugLogs": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable debug logging for preview build/classpath decisions and fallback behavior."
         }
       }
     }
@@ -50,6 +84,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "test": "npm run compile && node --test out/test/*.test.js",
     "lint": "eslint src --ext ts",
     "package": "vsce package"
   },
@@ -58,7 +93,7 @@
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.13.0",
     "@typescript-eslint/parser": "^6.13.0",
-    "@vscode/vsce": "^3.7.1",
+    "@vscode/vsce": "^3.9.2",
     "eslint": "^8.54.0",
     "typescript": "^5.3.2"
   }
