@@ -1,4 +1,4 @@
-package com.teggr.j2html.preview;
+package dev.rebelstack.j2html.preview;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  *
  * <p>The annotated method must be public, take no arguments, and return either a
  * {@link String} of HTML or a j2html {@code DomContent} object (which exposes a
- * {@code render()} method).  The j2html Preview VS Code extension discovers
+ * {@code render()} method). The j2html Preview VS Code extension discovers
  * methods carrying this annotation, compiles the surrounding Maven project, and
  * renders the returned HTML inside an editor side-panel.
  *

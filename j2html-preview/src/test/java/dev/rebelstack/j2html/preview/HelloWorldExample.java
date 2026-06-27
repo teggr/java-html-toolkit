@@ -1,4 +1,4 @@
-package com.teggr.j2html.preview;
+package dev.rebelstack.j2html.preview;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -131,5 +131,4 @@ public class HelloWorldExample {
                 </div>
                 """;
     }
-    
 }

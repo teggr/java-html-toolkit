@@ -35,7 +35,7 @@ Development mode lets you test the extension on any project without packaging or
 The extension calls `PreviewRunner` at runtime, so the annotation module must be installed into your local Maven repository first.
 
 ```bash
-cd j2html-preview-annotation
+cd j2html-preview
 mvn install -q
 ```
 
@@ -57,13 +57,13 @@ VS Code opens a second window labelled **[Extension Development Host]** with the
 
 ### 4. Test on an example project
 
-Inside the Extension Development Host window, open a Maven project that depends on `j2html-preview-annotation`:
+Inside the Extension Development Host window, open a Maven project that depends on `j2html-preview`:
 
 ```xml
 <!-- in your project's pom.xml -->
 <dependency>
-    <groupId>com.teggr.j2html</groupId>
-    <artifactId>j2html-preview-annotation</artifactId>
+    <groupId>dev.rebelstack</groupId>
+    <artifactId>j2html-preview</artifactId>
     <version>1.0.0-SNAPSHOT</version>
 </dependency>
 ```
@@ -71,7 +71,7 @@ Inside the Extension Development Host window, open a Maven project that depends 
 Then annotate a no-arg method with `@Preview`:
 
 ```java
-import com.teggr.j2html.preview.Preview;
+import dev.rebelstack.j2html.preview.Preview;
 
 public class MyPreviews {
 
@@ -105,5 +105,12 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 1. **CodeLens** — `PreviewCodeLensProvider` asks VS Code's Java symbol provider for classes and methods, then matches `@Preview` annotations from source text onto those symbols before registering a `▶ Preview` lens for each match.
 2. **Build** — clicking the lens compiles using the configured strategy (`j2html-preview.buildStrategy`): Java extension first or Maven first, with fallback to the other path when needed. The compile step is cached until a Java or `pom.xml` change invalidates it.
 3. **Classpath** — classpath resolution also follows `j2html-preview.buildStrategy`, with fallback between Java extension classpath and Maven dependency classpath. The resolved classpath is cached and recomputed when `pom.xml` changes.
-4. **Run** — `java -cp <classpath> com.teggr.j2html.preview.PreviewRunner <className> <methodName>` is executed and its stdout (the rendered HTML) is displayed in the WebView panel.
+4. **Run** — `java -cp <classpath> dev.rebelstack.j2html.preview.PreviewRunner <className> <methodName>` is executed and its stdout (the rendered HTML) is displayed in the WebView panel.
 5. **Refresh** — when CSS changes, the extension reuses the last rendered HTML and only reinjects styles into the WebView instead of rerunning the preview method.
+
+## Release and installation
+
+- **VS Code Marketplace**: install from the Marketplace listing for automatic update delivery.
+- **Direct VSIX**: download the `.vsix` attached to each GitHub Release and install via **Extensions: Install from VSIX...**.
+
+Repository workflows support both channels: GitHub Release artifacts are always produced, and Marketplace publishing is opt-in per manual release run.

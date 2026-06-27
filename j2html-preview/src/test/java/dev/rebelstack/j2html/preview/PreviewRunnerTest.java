@@ -1,4 +1,4 @@
-package com.teggr.j2html.preview;
+package dev.rebelstack.j2html.preview;
 
 import org.junit.jupiter.api.Test;
 
@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PreviewRunnerTest {
 
     // ---------------------------------------------------------------------------
-    // Fixtures – must be public so PreviewRunner can instantiate them via reflection
+    // Fixtures - must be public so PreviewRunner can instantiate them via reflection
     // ---------------------------------------------------------------------------
 
     /** A method that returns a plain HTML string. */

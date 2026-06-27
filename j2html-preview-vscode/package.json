@@ -3,7 +3,7 @@
   "displayName": "j2html Preview",
   "description": "Preview j2html HTML output directly in VS Code by running methods annotated with @Preview",
   "version": "0.1.8",
-  "publisher": "teggr",
+  "publisher": "dev-rebelstack",
   "license": "MIT",
   "repository": {
     "type": "git",

@@ -1,4 +1,4 @@
-package com.teggr.j2html.preview;
+package dev.rebelstack.j2html.preview;
 
 import java.lang.reflect.Method;
 
@@ -8,12 +8,12 @@ import java.lang.reflect.Method;
  *
  * <p>Usage:
  * <pre>
- *   java -cp &lt;classpath&gt; com.teggr.j2html.preview.PreviewRunner &lt;className&gt; &lt;methodName&gt;
+ *   java -cp &lt;classpath&gt; dev.rebelstack.j2html.preview.PreviewRunner &lt;className&gt; &lt;methodName&gt;
  * </pre>
  *
  * <p>The method must be public, take no arguments, and return either a plain
  * {@link String} or a j2html {@code DomContent} object that exposes a
- * {@code render()} method.  The rendered HTML is written to {@code stdout} so
+ * {@code render()} method. The rendered HTML is written to {@code stdout} so
  * that the extension can capture it and display it in a WebView panel.
  */
 public class PreviewRunner {
@@ -33,7 +33,7 @@ public class PreviewRunner {
 
     /**
      * Resolves, validates, and invokes the annotated method, returning its
-     * rendered HTML output.  Throws {@link IllegalArgumentException} for usage
+     * rendered HTML output. Throws {@link IllegalArgumentException} for usage
      * errors so that callers (including tests) can handle them without
      * triggering {@link System#exit}.
      */
