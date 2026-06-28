@@ -2,6 +2,10 @@
 
 Adds an Xcode-style `▶ Preview` CodeLens above every `@Preview`-annotated method in Java files, and renders the returned HTML in a side-panel WebView.
 
+## VSCode Plugin
+
+https://marketplace.visualstudio.com/items?itemName=RebelCraft.j2html-preview
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 18+
@@ -114,3 +118,7 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 - **Direct VSIX**: download the `.vsix` attached to each GitHub Release and install via **Extensions: Install from VSIX...**.
 
 Repository workflows support both channels: GitHub Release artifacts are always produced, and Marketplace publishing is opt-in per manual release run.
+
+Publishing information - https://marketplace.visualstudio.com/manage/publishers/rebelcraft 
+
+Helper guides - https://dev.to/diana_tang/complete-guide-publishing-vs-code-extensions-to-both-marketplaces-4d58 and https://code.visualstudio.com/api/working-with-extensions/publishing-extension#publishing-extensions
