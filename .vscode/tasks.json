@@ -4,19 +4,19 @@
     {
       "type": "npm",
       "script": "compile",
-      "path": "j2html-preview-vscode/",
+      "path": "java-html-tooling-vscode/",
       "group": "build",
       "problemMatcher": [],
-      "label": "npm: compile - j2html-preview-vscode",
+      "label": "npm: compile - java-html-tooling-vscode",
       "detail": "tsc -p ./"
     },
     {
       "type": "npm",
       "script": "watch",
-      "path": "j2html-preview-vscode/",
+      "path": "java-html-tooling-vscode/",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
-      "label": "npm: watch - j2html-preview-vscode",
+      "label": "npm: watch - java-html-tooling-vscode",
       "detail": "tsc -watch -p ./"
     }
   ]

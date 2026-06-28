@@ -3,7 +3,7 @@
 This document describes local packaging and publishing for the extension.
 
 Extension ID:
-- RebelCraft.j2html-preview
+- RebelCraft.java-html-tooling
 
 ## Prerequisites
 
@@ -15,19 +15,19 @@ Extension ID:
 ## Build and verify locally
 
 ```bash
-cd j2html-preview-vscode
+cd java-html-tooling-vscode
 npm ci
 npm test
 npm run package
 ```
 
 Output:
-- j2html-preview-<version>.vsix
+- java-html-tooling-<version>.vsix
 
 ## Install VSIX locally for verification
 
 ```bash
-code --install-extension ./j2html-preview-<version>.vsix --force
+code --install-extension ./java-html-tooling-<version>.vsix --force
 ```
 
 ## Publish directly to VS Code Marketplace
@@ -35,7 +35,7 @@ code --install-extension ./j2html-preview-<version>.vsix --force
 One-time login on your machine:
 
 ```bash
-cd j2html-preview-vscode
+cd java-html-tooling-vscode
 npx vsce login RebelCraft
 ```
 
@@ -48,13 +48,13 @@ npx vsce publish
 Or publish a specific packaged VSIX:
 
 ```bash
-npx vsce publish --packagePath ./j2html-preview-<version>.vsix
+npx vsce publish --packagePath ./java-html-tooling-<version>.vsix
 ```
 
 ## Suggested release flow
 
 ```bash
-cd j2html-preview-vscode
+cd java-html-tooling-vscode
 npm version <patch|minor|major>
 npm test
 npm run package

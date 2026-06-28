@@ -1,11 +1,20 @@
-# j2html-preview
+# java-html-tooling
 
-Support for rendering j2html code in developer environments.
+Tooling for developing, previewing, verifying and testing HTML-producing Java code.
 
-## Artifacts
+## Modules
 
-- `j2html-preview`: Java annotation and runner published to Maven Central.
-- `j2html-preview-vscode`: VS Code extension distributed through Marketplace and direct VSIX packages.
+- `java-html-preview-api`: generic Java preview contract (`@Preview`) and runtime entrypoint (`PreviewRunner`).
+- `java-html-preview-j2html`: j2html adapter/examples built on top of `java-html-preview-api`.
+- `java-html-tooling-vscode`: VS Code extension that discovers `@Preview` methods, compiles projects, and renders HTML.
+
+## Architecture seam
+
+This repository now separates the preview contract from templating adapters:
+
+- The extension only depends on the generic preview API runtime contract.
+- j2html-specific implementation/examples live in a dedicated adapter module.
+- Additional adapters (for example Thymeleaf/JTE) can be implemented independently using the same API.
 
 ## Release automation
 

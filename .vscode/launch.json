@@ -6,13 +6,13 @@
       "type": "extensionHost",
       "request": "launch",
       "args": [
-        "--extensionDevelopmentPath=${workspaceFolder}/j2html-preview-vscode",
+        "--extensionDevelopmentPath=${workspaceFolder}/java-html-tooling-vscode",
         "C:/Users/robin/IdeaProjects/j2html-plugin-demo"
       ],
       "outFiles": [
-        "${workspaceFolder}/j2html-preview-vscode/out/**/*.js"
+        "${workspaceFolder}/java-html-tooling-vscode/out/**/*.js"
       ],
-      "preLaunchTask": "npm: compile - j2html-preview-vscode"
+      "preLaunchTask": "npm: compile - java-html-tooling-vscode"
     }
   ]
 }

@@ -2,6 +2,6 @@
 target/
 
 # VS Code extension build output
-j2html-preview-vscode/out/
-j2html-preview-vscode/node_modules/
-j2html-preview-vscode/*.vsix
+java-html-tooling-vscode/out/
+java-html-tooling-vscode/node_modules/
+java-html-tooling-vscode/*.vsix

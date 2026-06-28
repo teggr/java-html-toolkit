@@ -2,8 +2,9 @@
 
 This document follows the same local release pattern used in j2html-extensions.
 
-Artifact:
-- dev.rebelcraft:j2html-preview
+Artifacts:
+- dev.rebelcraft:java-html-preview-api
+- dev.rebelcraft:java-html-preview-j2html
 
 ## Prerequisites
 
@@ -20,7 +21,7 @@ Expected Maven server entries:
 
 ```bash
 # 1) Start from a clean working tree
-cd j2html-preview
+cd java-html-tooling
 git status
 mvn clean
 
@@ -28,7 +29,7 @@ mvn clean
 git tag <version>
 
 # 3) Set release version (remove -SNAPSHOT)
-mvn -Pcentral versions:set -DremoveSnapshot
+mvn -Pcentral versions:set -DremoveSnapshot -DprocessAllModules
 
 # 4) Validate POM metadata for Maven Central
 mvn -Pcentral org.kordamp.maven:pomchecker-maven-plugin:1.14.0:check-maven-central
@@ -37,12 +38,12 @@ mvn -Pcentral org.kordamp.maven:pomchecker-maven-plugin:1.14.0:check-maven-centr
 mvn -Pcentral deploy -DignorePublishedComponents=true
 
 # 6) Move to next snapshot
-mvn -Pcentral versions:set -DnextSnapshot
+mvn -Pcentral versions:set -DnextSnapshot -DprocessAllModules
 mvn -Pcentral versions:commit
 
 # 7) Commit and push version changes + tag
-git add pom.xml
-git commit -m "release(preview): <version>"
+git add pom.xml java-html-preview-api/pom.xml java-html-preview-j2html/pom.xml
+git commit -m "release(java-html-tooling): <version>"
 git push --follow-tags
 ```
 
