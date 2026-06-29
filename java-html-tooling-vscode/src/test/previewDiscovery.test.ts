@@ -160,7 +160,7 @@ test('regex fallback supports non-public classes with modifiers', () => {
 final class PackagePrivatePreview {
 
     @Preview("pkg-private")
-    protected String sample() {
+    String sample() {
         return "<p>ok</p>";
     }
 }`;

@@ -180,7 +180,7 @@ export function discoverPreviewTargetsWithRegexFallback(documentText: string): P
 
         for (let j = i + 1; j < Math.min(i + MAX_ANNOTATION_DISTANCE, lines.length); j++) {
             const methodMatch = lines[j].match(
-                /(?:public|protected|private)\s+(?:(?:static|final|synchronized)\s+)*[\w<>[\],\s]+\s+(\w+)\s*\(\s*\)\s*(?:throws\s+[\w,\s]+)?\s*\{?/,
+                /(?:(?:public|protected|private)\s+)?(?:(?:static|final|synchronized)\s+)*[\w<>[\],\s]+\s+(\w+)\s*\(\s*\)\s*(?:throws\s+[\w,\s]+)?\s*\{?/
             );
             if (!methodMatch) {
                 continue;

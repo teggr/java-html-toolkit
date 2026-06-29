@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PreviewRunnerTest {
 
     // ---------------------------------------------------------------------------
-    // Fixtures - must be public so PreviewRunner can instantiate them via reflection
+    // Fixtures
     // ---------------------------------------------------------------------------
 
     /** A method that returns a plain HTML string. */
@@ -22,6 +22,11 @@ class PreviewRunnerTest {
     public static class FakeDomContent {
         public String render() {
             return "<p>rendered</p>";
+        }
+
+        @Override
+        public String toString() {
+            return render();
         }
     }
 
@@ -66,6 +71,20 @@ class PreviewRunnerTest {
         }
     }
 
+    static class HiddenDomContentPreview {
+        @Preview
+        private FakeDomContent extracted() {
+            return new FakeDomContent();
+        }
+    }
+
+    static class AccessFailingDomContentPreview {
+        @Preview
+        private FakeDomContent accessFails() {
+            return new FakeDomContent();
+        }
+    }
+
     // ---------------------------------------------------------------------------
     // Tests
     // ---------------------------------------------------------------------------
@@ -103,12 +122,27 @@ class PreviewRunnerTest {
     }
 
     @Test
-    void throwsWhenNoGeneratorSupportsMethod() {
-        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
-            PreviewRunner.run(new String[]{
+    void runsPackagePrivateDomContentMethodViaObjectFallback() throws Exception {
+        String output = PreviewRunner.run(new String[]{
+                HiddenDomContentPreview.class.getName(), "extracted"
+        });
+        assertEquals("<p>rendered</p>", output);
+    }
+
+    @Test
+    void fallsBackWhenHigherPriorityGeneratorHasAccessError() throws Exception {
+        String output = PreviewRunner.run(new String[]{
+                AccessFailingDomContentPreview.class.getName(), "accessFails"
+        });
+        assertEquals("<p>rendered</p>", output);
+    }
+
+    @Test
+    void runsPlainObjectMethodViaObjectFallback() throws Exception {
+        String output = PreviewRunner.run(new String[]{
                 PlainObjectPreview.class.getName(), "plain"
-            }));
-        assertTrue(ex.getMessage().contains("No preview generator supports method"));
+        });
+        assertEquals("plain-object", output);
     }
 
     @Test
