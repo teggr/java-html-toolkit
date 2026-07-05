@@ -2,6 +2,6 @@
 target/
 
 # VS Code extension build output
-java-html-tooling-vscode/out/
-java-html-tooling-vscode/node_modules/
-java-html-tooling-vscode/*.vsix
+vscode-extension/out/
+vscode-extension/node_modules/
+vscode-extension/*.vsix

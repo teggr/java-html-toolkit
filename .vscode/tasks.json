@@ -4,19 +4,19 @@
     {
       "type": "npm",
       "script": "compile",
-      "path": "java-html-tooling-vscode/",
+      "path": "vscode-extension/",
       "group": "build",
       "problemMatcher": [],
-      "label": "npm: compile - java-html-tooling-vscode",
+      "label": "npm: compile - vscode-extension",
       "detail": "tsc -p ./"
     },
     {
       "type": "npm",
       "script": "watch",
-      "path": "java-html-tooling-vscode/",
+      "path": "vscode-extension/",
       "problemMatcher": "$tsc-watch",
       "isBackground": true,
-      "label": "npm: watch - java-html-tooling-vscode",
+      "label": "npm: watch - vscode-extension",
       "detail": "tsc -watch -p ./"
     }
   ]

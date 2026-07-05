@@ -2,7 +2,7 @@
   "name": "java-html-tooling",
   "displayName": "Java HTML Tooling",
   "description": "Preview HTML-producing Java methods directly in VS Code.",
-  "version": "0.2.4",
+  "version": "1.0.0-SNAPSHOT",
   "publisher": "RebelCraft",
   "license": "MIT",
   "repository": {
@@ -87,8 +87,10 @@
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "npm run compile && node --test out/test/*.test.js",
+    "test:compiled": "node --test out/test/*.test.js",
     "lint": "eslint src --ext ts",
-    "package": "vsce package"
+    "package": "vsce package",
+    "publish": "vsce publish"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

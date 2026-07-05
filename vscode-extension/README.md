@@ -8,13 +8,13 @@ https://marketplace.visualstudio.com/items?itemName=RebelCraft.java-html-tooling
 
 ## Prerequisites
 
+- [Maven](https://maven.apache.org/) 3.9+ or the repository `mvnw` wrapper
 - [Node.js](https://nodejs.org/) 18+
 - [VS Code](https://code.visualstudio.com/) 1.85+
 - [Java](https://adoptium.net/) 17+
 - [Language Support for Java by Red Hat](https://marketplace.visualstudio.com/items?itemName=redhat.java)
-- [Maven](https://maven.apache.org/) 3.8+ (`mvn` on your `PATH`)
 
-The extension declares `redhat.java` as a dependency and bundles Maven for Java / Project Manager for Java in its extension pack metadata so the expected Java workspace tooling is installed alongside it.
+The extension declares `redhat.java` as a dependency and bundles Maven for Java / Project Manager for Java in its extension pack metadata so the expected Java workspace tooling is installed alongside it. The extension itself is built through the root Maven reactor, while its npm scripts remain the local implementation detail.
 
 ## Settings
 
@@ -34,19 +34,18 @@ The extension declares `redhat.java` as a dependency and bundles Maven for Java 
 
 Development mode lets you test the extension on any project without packaging or publishing it.
 
-### 1. Build the annotation JAR
+### 1. Build the Java modules
 
-The extension calls `PreviewRunner` at runtime, so the annotation module must be installed into your local Maven repository first.
+The extension calls `PreviewRunner` at runtime, so the Java modules should be built from the root reactor first.
 
 ```bash
-cd java-html-preview-api
-mvn install -q
+./mvnw test
 ```
 
 ### 2. Install extension dependencies and compile
 
 ```bash
-cd java-html-tooling-vscode
+cd vscode-extension
 npm install
 npm run compile
 ```
@@ -57,7 +56,7 @@ Press **F5** (or go to **Run → Start Debugging**) from any workspace folder.
 
 VS Code opens a second window labelled **[Extension Development Host]** with the extension loaded from your local source. Any change you make followed by `npm run compile` (or `npm run watch` for automatic recompilation) is reflected immediately after reloading the host window (**Ctrl+R** / **Cmd+R**).
 
-> **Note:** You can work from either the root `java-html-tooling` folder or open just the `java-html-tooling-vscode` subfolder—both work. The root folder includes a `.vscode/launch.json` configuration that automatically targets the extension subfolder.
+> **Note:** You can work from either the root `java-html-tooling` folder or open just the `vscode-extension` subfolder—both work. The root folder includes a `.vscode/launch.json` configuration that automatically targets the extension subfolder.
 
 ### 4. Test on an example project
 
@@ -104,6 +103,14 @@ Run the TypeScript compiler in watch mode so recompilation happens on every save
 npm run watch
 ```
 
+To build or package the extension from the repository root, use Maven:
+
+```bash
+./mvnw -pl vscode-extension package
+```
+
+That produces the VSIX from the Maven-owned version and lifecycle.
+
 After saving a change to `src/extension.ts`, reload the Extension Development Host window (**Ctrl+R** / **Cmd+R**) to pick up the new build.
 
 ## How it works
@@ -119,7 +126,9 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 - **VS Code Marketplace**: install from the Marketplace listing for automatic update delivery.
 - **Direct VSIX**: download the `.vsix` attached to each GitHub Release and install via **Extensions: Install from VSIX...**.
 
-Repository workflows support both channels: GitHub Release artifacts are always produced, and Marketplace publishing is opt-in per manual release run.
+Repository workflows support both channels: GitHub Release artifacts are always produced, and Marketplace publishing is opt-in via the extension module's publish step.
+
+Build ownership is Maven-first for the repository; npm remains the extension-local implementation detail.
 
 Publishing information - https://marketplace.visualstudio.com/manage/publishers/rebelcraft 
 

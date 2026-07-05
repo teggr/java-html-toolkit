@@ -5,67 +5,78 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dev.rebelcraft</groupId>
-    <artifactId>java-html-preview-api</artifactId>
-    <version>0.0.6-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <artifactId>java-html-tooling</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
 
-    <name>java-html-preview-api</name>
-    <description>Generic annotation and runtime entrypoint for previewing HTML-producing Java methods.</description>
+    <name>java-html-tooling</name>
+    <description>Repo reactor for preview API, test docs, and VS Code extension packaging.</description>
     <url>https://github.com/teggr/java-html-tooling</url>
+
+    <modules>
+        <module>html-preview</module>
+        <module>html-test-docs</module>
+        <module>vscode-extension</module>
+    </modules>
 
     <properties>
         <java.version>17</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <gpg.keyname/>
+        <junit.jupiter.version>5.10.1</junit.jupiter.version>
+        <j2html.version>1.6.0</j2html.version>
+        <selenide.version>7.5.0</selenide.version>
+        <javaparser.version>3.26.2</javaparser.version>
+        <commons.io.version>2.17.0</commons.io.version>
     </properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter</artifactId>
-            <version>5.10.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit.jupiter</groupId>
+                <artifactId>junit-jupiter</artifactId>
+                <version>${junit.jupiter.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.11.0</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.2.3</version>
-            </plugin>
-        </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.11.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.2.3</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.4</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.codehaus.mojo</groupId>
+                    <artifactId>exec-maven-plugin</artifactId>
+                    <version>3.5.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 
     <profiles>
         <profile>
             <id>central</id>
-            <properties>
-                <gpg.keyname/>
-            </properties>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>versions-maven-plugin</artifactId>
-                        <version>2.18.0</version>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.kordamp.maven</groupId>
-                        <artifactId>pomchecker-maven-plugin</artifactId>
-                        <version>1.14.0</version>
-                    </plugin>
-                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.3.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -78,7 +89,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.8.0</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -91,7 +101,6 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.7</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -110,7 +119,6 @@
                     <plugin>
                         <groupId>org.sonatype.central</groupId>
                         <artifactId>central-publishing-maven-plugin</artifactId>
-                        <version>0.11.0</version>
                         <extensions>true</extensions>
                         <configuration>
                             <publishingServerId>central</publishingServerId>
@@ -143,4 +151,5 @@
         <developerConnection>scm:git:ssh://github.com:teggr/java-html-tooling.git</developerConnection>
         <url>http://github.com/teggr/java-html-tooling/tree/main</url>
     </scm>
+
 </project>

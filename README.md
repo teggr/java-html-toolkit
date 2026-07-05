@@ -4,9 +4,9 @@ Tooling for developing, previewing, verifying and testing HTML-producing Java co
 
 ## Modules
 
-- `java-html-preview-api`: generic Java preview contract (`@Preview`) and runtime entrypoint (`PreviewRunner`).
-- `java-html-preview-j2html`: j2html adapter/examples built on top of `java-html-preview-api`.
-- `java-html-tooling-vscode`: VS Code extension that discovers `@Preview` methods, compiles projects, and renders HTML.
+- `html-preview`: generic Java preview contract (`@Preview`) and runtime entrypoint (`PreviewRunner`).
+- `test-docs`: publishable documentation/test support module for preview examples and related HTML tooling fixtures.
+- `vscode-extension`: VS Code extension that discovers `@Preview` methods, compiles projects, and renders HTML. It is built from the root Maven reactor and keeps its npm scripts as the local implementation detail.
 
 ## Architecture seam
 
@@ -20,5 +20,13 @@ This repository now separates the preview contract from templating adapters:
 
 Releases are currently driven from local/manual workflows:
 
-- Maven Central release flow: `docs/RELEASE-MAVEN.md`
-- VS Code extension release flow: `docs/RELEASE-VSCODE.md`
+- Unified Maven + VS Code release flow: `docs/RELEASE.md`
+
+## Build entry points
+
+- `./mvnw test` runs the full repository build.
+- `./mvnw -pl html-preview install` installs the preview API into the local Maven repository.
+- `./mvnw -Pcentral -pl html-preview,html-test-docs package` prepares the publishable Java modules with sources, javadocs, and signing configured through the root reactor.
+- `./mvnw -pl vscode-extension package` compiles, tests, and packages the extension into a VSIX.
+
+Versioning is Maven-driven: the root reactor version is the source of truth, and `vscode-extension/package.json` follows that version.
