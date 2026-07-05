@@ -84,6 +84,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
+    "clean": "node -e \"const fs=require('fs'); const path=require('path'); const cwd=process.cwd(); fs.rmSync(path.join(cwd,'out'), { recursive: true, force: true }); for (const file of fs.readdirSync(cwd)) { if (file.endsWith('.vsix')) { fs.rmSync(path.join(cwd, file), { force: true }); } }\"",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "test": "npm run compile && node --test out/test/*.test.js",
