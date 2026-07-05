@@ -2,7 +2,7 @@
   "name": "java-html-tooling",
   "displayName": "Java HTML Tooling",
   "description": "Preview HTML-producing Java methods directly in VS Code.",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "publisher": "RebelCraft",
   "license": "MIT",
   "repository": {
