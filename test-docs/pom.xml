@@ -6,19 +6,19 @@
 
     <parent>
         <groupId>dev.rebelcraft</groupId>
-        <artifactId>java-html-tooling</artifactId>
+        <artifactId>java-html-toolkit</artifactId>
         <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>dev.rebelcraft</groupId>
-    <artifactId>java-html-tooling-html-test-docs</artifactId>
+    <artifactId>java-html-toolkit-test-docs</artifactId>
     <packaging>jar</packaging>
 
-    <name>java-html-tooling-html-test-docs</name>
+    <name>java-html-toolkit-test-docs</name>
 
     <description>Support module for HTML preview documentation and publishable test docs.</description>
-    <url>https://github.com/teggr/java-html-tooling</url>
+    <url>https://github.com/teggr/java-html-toolkit</url>
 
     <properties>
 

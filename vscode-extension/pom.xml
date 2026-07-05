@@ -6,15 +6,15 @@
 
     <parent>
         <groupId>dev.rebelcraft</groupId>
-        <artifactId>java-html-tooling</artifactId>
+        <artifactId>java-html-toolkit</artifactId>
         <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>java-html-tooling-vscode-extension</artifactId>
+    <artifactId>java-html-toolkit-vscode-extension</artifactId>
     <packaging>pom</packaging>
 
-    <name>java-html-tooling-vscode-extension</name>
+    <name>java-html-toolkit-vscode-extension</name>
     <description>VS Code extension build and packaging module.</description>
 
     <build>

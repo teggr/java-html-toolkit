@@ -9,11 +9,11 @@ Maven is the source of truth for versioning and release orchestration:
 ## Scope
 
 Java artifacts:
-- dev.rebelcraft:java-html-tooling-html-preview
-- dev.rebelcraft:java-html-tooling-html-test-docs
+- dev.rebelcraft:java-html-toolkit-html-preview
+- dev.rebelcraft:java-html-toolkit-html-test-docs
 
 VS Code extension:
-- RebelCraft.java-html-tooling
+- RebelCraft.java-html-toolkit
 
 ## Prerequisites
 
@@ -43,7 +43,7 @@ PAT note:
 
 ```bash
 # 1) Start from a clean working tree at repo root
-cd java-html-tooling
+cd java-html-toolkit
 git status
 ./mvnw clean
 
@@ -74,7 +74,7 @@ cd ..
 
 # 9) Commit and push version changes + tag
 git add pom.xml html-preview/pom.xml html-test-docs/pom.xml vscode-extension/package.json
-git commit -m "release(java-html-tooling): <version>"
+git commit -m "release(java-html-toolkit): <version>"
 git push --follow-tags
 ```
 
@@ -82,7 +82,7 @@ git push --follow-tags
 
 - Maven Central publication for Java modules.
 - VSIX generated under `vscode-extension/` during package phase.
-- Marketplace publication for `RebelCraft.java-html-tooling`.
+- Marketplace publication for `RebelCraft.java-html-toolkit`.
 
 ## Notes
 

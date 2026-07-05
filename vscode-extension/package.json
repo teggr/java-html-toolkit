@@ -1,5 +1,5 @@
 {
-  "name": "java-html-tooling",
+  "name": "java-html-toolkit",
   "displayName": "Java HTML Tooling",
   "description": "Preview HTML-producing Java methods directly in VS Code.",
   "version": "1.0.1-SNAPSHOT",
@@ -7,11 +7,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/teggr/java-html-tooling.git"
+    "url": "https://github.com/teggr/java-html-toolkit.git"
   },
-  "homepage": "https://github.com/teggr/java-html-tooling",
+  "homepage": "https://github.com/teggr/java-html-toolkit",
   "bugs": {
-    "url": "https://github.com/teggr/java-html-tooling/issues"
+    "url": "https://github.com/teggr/java-html-toolkit/issues"
   },
   "engines": {
     "vscode": "^1.85.0"
@@ -39,18 +39,18 @@
   "contributes": {
     "commands": [
       {
-        "command": "java-html-tooling.openPreview",
+        "command": "java-html-toolkit.openPreview",
         "title": "Java HTML: Open Preview"
       },
       {
-        "command": "java-html-tooling.showDiagnostics",
+        "command": "java-html-toolkit.showDiagnostics",
         "title": "Java HTML: Show Diagnostics"
       }
     ],
     "configuration": {
       "title": "Java HTML Tooling",
       "properties": {
-        "java-html-tooling.cssFiles": {
+        "java-html-toolkit.cssFiles": {
           "type": "array",
           "default": [
             "src/main/resources/static/styles.css"
@@ -60,12 +60,12 @@
             "type": "string"
           }
         },
-        "java-html-tooling.inlineStyles": {
+        "java-html-toolkit.inlineStyles": {
           "type": "string",
           "default": "",
           "description": "Additional CSS to inject inline into all previews (optional)"
         },
-        "java-html-tooling.buildStrategy": {
+        "java-html-toolkit.buildStrategy": {
           "type": "string",
           "enum": [
             "java-first",
@@ -74,7 +74,7 @@
           "default": "maven-first",
           "description": "Choose whether preview build/classpath resolution tries Java extension APIs first or Maven commands first."
         },
-        "java-html-tooling.debugLogs": {
+        "java-html-toolkit.debugLogs": {
           "type": "boolean",
           "default": false,
           "description": "Enable debug logging for preview build/classpath decisions and fallback behavior."

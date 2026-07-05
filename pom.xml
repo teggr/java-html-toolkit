@@ -5,17 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>dev.rebelcraft</groupId>
-    <artifactId>java-html-tooling</artifactId>
+    <artifactId>java-html-toolkit</artifactId>
     <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>java-html-tooling</name>
+    <name>java-html-toolkit</name>
     <description>Repo reactor for preview API, test docs, and VS Code extension packaging.</description>
-    <url>https://github.com/teggr/java-html-tooling</url>
+    <url>https://github.com/teggr/java-html-toolkit</url>
 
     <modules>
-        <module>html-preview</module>
-        <module>html-test-docs</module>
+        <module>preview</module>
+        <module>test-docs</module>
         <module>vscode-extension</module>
     </modules>
 
@@ -147,9 +147,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/teggr/java-html-tooling</connection>
-        <developerConnection>scm:git:ssh://github.com:teggr/java-html-tooling.git</developerConnection>
-        <url>http://github.com/teggr/java-html-tooling/tree/main</url>
+        <connection>scm:git:git://github.com/teggr/java-html-toolkit</connection>
+        <developerConnection>scm:git:ssh://github.com:teggr/java-html-toolkit.git</developerConnection>
+        <url>http://github.com/teggr/java-html-toolkit/tree/main</url>
     </scm>
 
 </project>

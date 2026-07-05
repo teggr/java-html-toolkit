@@ -87,14 +87,14 @@ export function activate(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(
         vscode.commands.registerCommand(
-            'java-html-tooling.openPreview',
+            'java-html-toolkit.openPreview',
             (args: PreviewCommandArgs) => runPreview(context, args),
         ),
     );
 
     context.subscriptions.push(
         vscode.commands.registerCommand(
-            'java-html-tooling.showDiagnostics',
+            'java-html-toolkit.showDiagnostics',
             () => showDiagnostics(),
         ),
     );
@@ -160,7 +160,7 @@ class PreviewCodeLensProvider implements vscode.CodeLensProvider {
                 new vscode.Range(target.annotationLine, 0, target.annotationLine, lineText.length),
                 {
                     title: '▶ Preview',
-                    command: 'java-html-tooling.openPreview',
+                    command: 'java-html-toolkit.openPreview',
                     arguments: [
                         {
                             document,
@@ -553,7 +553,7 @@ interface CssConfiguration {
  * Reads CSS configuration from VS Code settings.
  */
 function getCssConfiguration(): CssConfiguration {
-    const config = vscode.workspace.getConfiguration('java-html-tooling');
+    const config = vscode.workspace.getConfiguration('java-html-toolkit');
     return {
         cssFiles: config.get<string[]>('cssFiles') || ['src/main/resources/static/styles.css'],
         inlineStyles: config.get<string>('inlineStyles') || '',
@@ -743,7 +743,7 @@ async function resolveClasspath(documentUri: vscode.Uri, projectRoot: string): P
 }
 
 async function resolveMavenClasspathEntries(projectRoot: string): Promise<string[]> {
-    const cpFile = path.join(projectRoot, 'target', 'java-html-tooling-classpath.txt');
+    const cpFile = path.join(projectRoot, 'target', 'java-html-toolkit-classpath.txt');
 
     await execMaven(projectRoot, [
         'dependency:build-classpath',
@@ -837,7 +837,7 @@ function toErrorMessage(err: unknown): string {
 }
 
 function getRuntimeSettings(): RuntimeSettings {
-    const config = vscode.workspace.getConfiguration('java-html-tooling');
+    const config = vscode.workspace.getConfiguration('java-html-toolkit');
     return {
         buildStrategy: normalizeBuildStrategy(config.get<string>('buildStrategy')),
         debugLogs: config.get<boolean>('debugLogs') ?? false,
@@ -849,7 +849,7 @@ function debugLog(settings: RuntimeSettings, message: string): void {
         return;
     }
 
-    console.log(`[java-html-tooling] ${message}`);
+    console.log(`[java-html-toolkit] ${message}`);
 }
 
 async function showDiagnostics(): Promise<void> {
@@ -915,7 +915,7 @@ function runJavaMethod(
 ): Promise<string> {
     return new Promise((resolve, reject) => {
         // Create a temporary argument file to avoid Windows command line length limits
-        const argFile = path.join(cwd, 'target', '.java-html-tooling-preview-args.txt');
+        const argFile = path.join(cwd, 'target', '.java-html-toolkit-preview-args.txt');
         
         try {
             // Write classpath and arguments to the file (one argument per line)

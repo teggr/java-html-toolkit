@@ -6,18 +6,18 @@
 
     <parent>
         <groupId>dev.rebelcraft</groupId>
-        <artifactId>java-html-tooling</artifactId>
+        <artifactId>java-html-toolkit</artifactId>
         <version>1.0.1-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <groupId>dev.rebelcraft</groupId>
-    <artifactId>java-html-tooling-html-preview</artifactId>
+    <artifactId>java-html-toolkit-preview</artifactId>
     <packaging>jar</packaging>
 
-    <name>java-html-tooling-html-preview</name>
+    <name>java-html-toolkit-preview</name>
     <description>Generic annotation and runtime entrypoint for previewing HTML-producing Java methods.</description>
-    <url>https://github.com/teggr/java-html-tooling</url>
+    <url>https://github.com/teggr/java-html-toolkit</url>
 
     <properties>
     </properties>

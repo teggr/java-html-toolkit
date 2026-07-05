@@ -4,7 +4,7 @@ Adds an Xcode-style `▶ Preview` CodeLens above every `@Preview`-annotated meth
 
 ## VSCode Plugin
 
-https://marketplace.visualstudio.com/items?itemName=RebelCraft.java-html-tooling
+https://marketplace.visualstudio.com/items?itemName=RebelCraft.java-html-toolkit
 
 ## Prerequisites
 
@@ -18,12 +18,12 @@ The extension declares `redhat.java` as a dependency and bundles Maven for Java 
 
 ## Settings
 
-- `java-html-tooling.cssFiles`: CSS files/globs/URLs to inject into preview output.
-- `java-html-tooling.inlineStyles`: Inline CSS appended to preview output.
-- `java-html-tooling.buildStrategy`: `maven-first` (default) or `java-first`.
+- `java-html-toolkit.cssFiles`: CSS files/globs/URLs to inject into preview output.
+- `java-html-toolkit.inlineStyles`: Inline CSS appended to preview output.
+- `java-html-toolkit.buildStrategy`: `maven-first` (default) or `java-first`.
     - `maven-first` tries Maven commands first and falls back to Java extension APIs.
     - `java-first` tries Java extension APIs first and falls back to Maven commands.
-- `java-html-tooling.debugLogs`: when `true`, logs classpath/build decision paths and fallback reasons.
+- `java-html-toolkit.debugLogs`: when `true`, logs classpath/build decision paths and fallback reasons.
 
 ## Commands
 
@@ -56,7 +56,7 @@ Press **F5** (or go to **Run → Start Debugging**) from any workspace folder.
 
 VS Code opens a second window labelled **[Extension Development Host]** with the extension loaded from your local source. Any change you make followed by `npm run compile` (or `npm run watch` for automatic recompilation) is reflected immediately after reloading the host window (**Ctrl+R** / **Cmd+R**).
 
-> **Note:** You can work from either the root `java-html-tooling` folder or open just the `vscode-extension` subfolder—both work. The root folder includes a `.vscode/launch.json` configuration that automatically targets the extension subfolder.
+> **Note:** You can work from either the root `java-html-toolkit` folder or open just the `vscode-extension` subfolder—both work. The root folder includes a `.vscode/launch.json` configuration that automatically targets the extension subfolder.
 
 ### 4. Test on an example project
 
@@ -116,8 +116,8 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 ## How it works
 
 1. **CodeLens** — `PreviewCodeLensProvider` asks VS Code's Java symbol provider for classes and methods, then matches `@Preview` annotations from source text onto those symbols before registering a `▶ Preview` lens for each match.
-2. **Build** — clicking the lens compiles using the configured strategy (`java-html-tooling.buildStrategy`): Java extension first or Maven first, with fallback to the other path when needed. The compile step is cached until a Java or `pom.xml` change invalidates it.
-3. **Classpath** — classpath resolution also follows `java-html-tooling.buildStrategy`, with fallback between Java extension classpath and Maven dependency classpath. The resolved classpath is cached and recomputed when `pom.xml` changes.
+2. **Build** — clicking the lens compiles using the configured strategy (`java-html-toolkit.buildStrategy`): Java extension first or Maven first, with fallback to the other path when needed. The compile step is cached until a Java or `pom.xml` change invalidates it.
+3. **Classpath** — classpath resolution also follows `java-html-toolkit.buildStrategy`, with fallback between Java extension classpath and Maven dependency classpath. The resolved classpath is cached and recomputed when `pom.xml` changes.
 4. **Run** — `java -cp <classpath> dev.rebelcraft.html.preview.PreviewRunner <className> <methodName>` is executed and its stdout (the rendered HTML) is displayed in the WebView panel.
 5. **Refresh** — when CSS changes, the extension reuses the last rendered HTML and only reinjects styles into the WebView instead of rerunning the preview method.
 

@@ -1,12 +1,12 @@
-# java-html-tooling
+# java-html-toolkit
 
-Tooling for developing, previewing, verifying and testing HTML-producing Java code.
+Toolkit for developing, previewing, verifying and testing HTML-producing Java code.
 
 ## Modules
 
-- `html-preview`: generic Java preview contract (`@Preview`) and runtime entrypoint (`PreviewRunner`).
-- `test-docs`: publishable documentation/test support module for preview examples and related HTML tooling fixtures.
 - `vscode-extension`: VS Code extension that discovers `@Preview` methods, compiles projects, and renders HTML. It is built from the root Maven reactor and keeps its npm scripts as the local implementation detail.
+- `html-preview`: runtime entrypoint (`PreviewRunner`) for (`@Preview`), extensible by supporting template frameworks.
+- `test-docs`: publishable documentation/test support module for preview examples and related HTML tooling fixtures.
 
 ## Architecture seam
 
