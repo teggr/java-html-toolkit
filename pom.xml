@@ -6,7 +6,7 @@
 
     <groupId>dev.rebelcraft</groupId>
     <artifactId>java-html-tooling</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>java-html-tooling</name>
