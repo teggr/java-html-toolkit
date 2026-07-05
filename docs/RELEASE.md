@@ -9,8 +9,8 @@ Maven is the source of truth for versioning and release orchestration:
 ## Scope
 
 Java artifacts:
-- dev.rebelcraft:java-html-toolkit-html-preview
-- dev.rebelcraft:java-html-toolkit-html-test-docs
+- dev.rebelcraft:java-html-toolkit-preview
+- dev.rebelcraft:java-html-toolkit-test-docs
 
 VS Code extension:
 - RebelCraft.java-html-toolkit
