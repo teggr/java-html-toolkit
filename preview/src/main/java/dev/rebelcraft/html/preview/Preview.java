@@ -20,9 +20,9 @@ import java.lang.annotation.Target;
  * <pre>{@code
  * public class MyComponentPreview {
  *
- *     @Preview("Main layout")
- *     public String mainLayout() {
- *         return "<h1>Hello, HTML tooling!</h1>";
+ *     @Preview(value = "Primary Button", group = "Buttons", description = "A primary action button")
+ *     public String primaryButton() {
+ *         return "<button class=\"btn-primary\">Click me</button>";
  *     }
  * }
  * }</pre>
@@ -32,8 +32,26 @@ import java.lang.annotation.Target;
 public @interface Preview {
 
     /**
-     * An optional human-readable name shown in the preview panel title.
+     * An optional human-readable name shown in the preview panel title and catalog.
      * Defaults to the method name when left blank.
      */
     String value() default "";
+
+    /**
+     * The catalog group (component family) this preview belongs to.
+     * Previews in the same group are listed together in the sidebar.
+     * Defaults to the declaring class's simple name when left blank.
+     */
+    String group() default "";
+
+    /**
+     * An optional prose description shown alongside the preview in the catalog.
+     */
+    String description() default "";
+
+    /**
+     * Sort order within the group. Lower values appear first.
+     * Defaults to {@code 0}; ties are broken alphabetically by name.
+     */
+    int order() default 0;
 }
