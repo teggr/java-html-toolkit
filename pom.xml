@@ -16,6 +16,7 @@
     <modules>
         <module>preview</module>
         <module>test-docs</module>
+        <module>html-catalog</module>
         <module>vscode-extension</module>
     </modules>
 
