@@ -2,7 +2,7 @@
   "name": "java-html-toolkit",
   "displayName": "Java HTML Toolkit",
   "description": "Preview HTML-producing Java methods directly in VS Code.",
-  "version": "1.0.2-SNAPSHOT",
+  "version": "1.0.3-SNAPSHOT",
   "publisher": "RebelCraft",
   "license": "MIT",
   "repository": {
