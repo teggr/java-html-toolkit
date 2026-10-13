@@ -4,9 +4,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Generates a self-contained static HTML catalog from a list of
@@ -16,6 +19,7 @@ import java.util.Map;
  * <pre>
  *   index.html                             — two-panel shell (sidebar + iframe area)
  *   frames/{class-path}/{methodName}.html  — isolated per-preview page loaded in the iframe
+ *   frames/{class-path}/{methodName}-overload-{n}.html — used when methods are overloaded
  * </pre>
  *
  * <p>No external CSS/JS dependencies are required; all assets are embedded inline.
@@ -35,8 +39,10 @@ public class CatalogSite {
         File framesDir = new File(outputDir, "frames");
         framesDir.mkdirs();
 
+        Map<String, Integer> overloadIndexes = overloadedMethodIndexes(entries);
+
         for (RenderedEntry entry : entries) {
-            generateFrame(entry, framesDir);
+            generateFrame(entry, framesDir, overloadIndexes);
         }
 
         generateIndex(entries, outputDir);
@@ -50,12 +56,16 @@ public class CatalogSite {
      * Writes an isolated HTML page for a single preview entry so that it can
      * be loaded inside an {@code <iframe>} without style bleed from the shell.
      */
-    private void generateFrame(RenderedEntry entry, File framesDir) throws IOException {
+    private void generateFrame(
+            RenderedEntry entry,
+            File framesDir,
+            Map<String, Integer> overloadIndexes
+    ) throws IOException {
         String classPath = classToPath(entry.entry().className());
         File classDir = new File(framesDir, classPath);
         classDir.mkdirs();
 
-        File frameFile = new File(classDir, entry.entry().methodName() + ".html");
+        File frameFile = new File(classDir, frameFileName(entry.entry(), overloadIndexes));
 
         String body;
         if (entry.hasError()) {
@@ -96,6 +106,7 @@ public class CatalogSite {
     private String buildCatalogJson(List<RenderedEntry> entries) {
         // Group entries preserving insertion order (scanner already sorts them)
         Map<String, List<RenderedEntry>> byGroup = new LinkedHashMap<>();
+        Map<String, Integer> overloadIndexes = overloadedMethodIndexes(entries);
         for (RenderedEntry entry : entries) {
             byGroup.computeIfAbsent(entry.entry().group(), k -> new java.util.ArrayList<>()).add(entry);
         }
@@ -117,11 +128,12 @@ public class CatalogSite {
                 firstItem = false;
 
                 String frameSrc = "frames/" + classToPath(re.entry().className())
-                        + "/" + re.entry().methodName() + ".html";
+                        + "/" + frameFileName(re.entry(), overloadIndexes);
 
                 sb.append("{\"name\":").append(jsonString(re.entry().name()));
                 sb.append(",\"description\":").append(jsonString(re.entry().description()));
                 sb.append(",\"frameSrc\":").append(jsonString(frameSrc));
+                sb.append(",\"source\":").append(jsonString(re.hasError() ? "" : re.html()));
                 sb.append("}");
             }
 
@@ -130,6 +142,38 @@ public class CatalogSite {
 
         sb.append("]}");
         return sb.toString();
+    }
+
+    private Map<String, Integer> overloadedMethodIndexes(List<RenderedEntry> entries) {
+        Map<String, Set<String>> signaturesByMethod = new HashMap<>();
+        for (RenderedEntry rendered : entries) {
+            CatalogEntry entry = rendered.entry();
+            signaturesByMethod
+                    .computeIfAbsent(methodKey(entry), ignored -> new TreeSet<>())
+                    .add(entry.methodSignature() == null ? "" : entry.methodSignature());
+        }
+
+        Map<String, Integer> indexes = new HashMap<>();
+        for (Map.Entry<String, Set<String>> method : signaturesByMethod.entrySet()) {
+            if (method.getValue().size() > 1) {
+                int index = 1;
+                for (String signature : method.getValue()) {
+                    indexes.put(method.getKey() + "\0" + signature, index++);
+                }
+            }
+        }
+        return indexes;
+    }
+
+    private String frameFileName(CatalogEntry entry, Map<String, Integer> overloadIndexes) {
+        String signature = entry.methodSignature() == null ? "" : entry.methodSignature();
+        Integer overloadIndex = overloadIndexes.get(methodKey(entry) + "\0" + signature);
+        String suffix = overloadIndex == null ? "" : "-overload-" + overloadIndex;
+        return entry.methodName() + suffix + ".html";
+    }
+
+    private String methodKey(CatalogEntry entry) {
+        return entry.className() + "\0" + entry.methodName();
     }
 
     // -------------------------------------------------------------------------
@@ -161,6 +205,11 @@ public class CatalogSite {
                 case '\n' -> sb.append("\\n");
                 case '\r' -> sb.append("\\r");
                 case '\t' -> sb.append("\\t");
+                case '<'  -> sb.append("\\u003c");
+                case '>'  -> sb.append("\\u003e");
+                case '&'  -> sb.append("\\u0026");
+                case '\u2028' -> sb.append("\\u2028");
+                case '\u2029' -> sb.append("\\u2029");
                 default   -> {
                     if (c < 0x20) {
                         sb.append(String.format("\\u%04x", (int) c));
@@ -300,7 +349,7 @@ public class CatalogSite {
                 frame.style.display = 'none';
                 srcPanel.style.display = 'block';
                 var pre = document.getElementById('source-code');
-                pre.textContent = '// Source not available in this version.';
+                pre.textContent = currentItem ? currentItem.source : '';
               }
             }
             renderSidebar();

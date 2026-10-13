@@ -5,7 +5,9 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -45,6 +47,29 @@ class CatalogScannerTest {
     public static class NonPreview {
         public String notAnnotated() {
             return "ignored";
+        }
+    }
+
+    public static class MalformedPreviews {
+        @Preview(value = "Argument Preview", group = "Malformed")
+        public String withArgument(String value) {
+            return value;
+        }
+
+        @Preview(value = "Void Preview", group = "Malformed")
+        public void noReturnValue() {
+        }
+    }
+
+    public static class OverloadedPreviews {
+        @Preview(value = "Overloaded", group = "Overloads")
+        public String overloaded() {
+            return "<p>no arguments</p>";
+        }
+
+        @Preview(value = "Overloaded", group = "Overloads")
+        public String overloaded(String value) {
+            return value;
         }
     }
 
@@ -129,6 +154,41 @@ class CatalogScannerTest {
         assertEquals("Secondary Button", buttons.get(1).name());
     }
 
+    @Test
+    void keepsUnsupportedAndOverloadedMethodsDistinct() throws Exception {
+        List<CatalogEntry> all = scanTestClasses(new CatalogScanner());
+
+        List<CatalogEntry> malformed = all.stream()
+                .filter(entry -> entry.className().equals(MalformedPreviews.class.getName()))
+                .toList();
+        assertEquals(2, malformed.size());
+
+        List<CatalogEntry> overloaded = all.stream()
+                .filter(entry -> entry.className().equals(OverloadedPreviews.class.getName()))
+                .toList();
+        assertEquals(2, overloaded.size());
+        assertEquals(2, overloaded.stream().map(CatalogEntry::methodSignature).distinct().count());
+    }
+
+    @Test
+    void deduplicatesRepeatedClassPathRoots() throws Exception {
+        URL location = CatalogScannerTest.class.getProtectionDomain().getCodeSource().getLocation();
+        try (URLClassLoader classLoader = new URLClassLoader(
+                new URL[]{location, location},
+                Thread.currentThread().getContextClassLoader()
+        )) {
+            List<CatalogEntry> entries = new CatalogScanner().scan(classLoader);
+            List<CatalogEntry> buttonEntries = entries.stream()
+                    .filter(entry -> entry.className().equals(ButtonPreviews.class.getName()))
+                    .toList();
+
+            Set<String> signatures = new HashSet<>();
+            buttonEntries.forEach(entry -> signatures.add(entry.methodSignature()));
+            assertEquals(signatures.size(), buttonEntries.size());
+            assertEquals(2, buttonEntries.size());
+        }
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -139,10 +199,11 @@ class CatalogScannerTest {
      */
     private List<CatalogEntry> scanTestClasses(CatalogScanner scanner) throws Exception {
         URL location = CatalogScannerTest.class.getProtectionDomain().getCodeSource().getLocation();
-        URLClassLoader cl = new URLClassLoader(
+        try (URLClassLoader cl = new URLClassLoader(
                 new URL[]{ location },
                 Thread.currentThread().getContextClassLoader()
-        );
-        return scanner.scan(cl);
+        )) {
+            return scanner.scan(cl);
+        }
     }
 }

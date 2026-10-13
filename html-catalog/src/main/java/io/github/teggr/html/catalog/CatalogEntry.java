@@ -9,6 +9,7 @@ package io.github.teggr.html.catalog;
  * @param order      Sort order within the group.
  * @param className  Fully-qualified class name of the declaring class.
  * @param methodName Name of the annotated method.
+ * @param methodSignature Reflection signature used to distinguish overloaded methods.
  */
 public record CatalogEntry(
         String group,
@@ -16,5 +17,22 @@ public record CatalogEntry(
         String description,
         int order,
         String className,
-        String methodName
-) {}
+        String methodName,
+        String methodSignature
+) {
+
+    /**
+     * Creates an entry without a reflection signature for callers that construct
+     * entries directly. Scanned entries always include the method signature.
+     */
+    public CatalogEntry(
+            String group,
+            String name,
+            String description,
+            int order,
+            String className,
+            String methodName
+    ) {
+        this(group, name, description, order, className, methodName, "");
+    }
+}
