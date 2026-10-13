@@ -41,23 +41,32 @@ Configure these repository Actions secrets:
 ## CI
 
 Pull requests and pushes to `main` run the Maven reactor tests, VS Code extension
-lint, and extension packaging in `.github/workflows/maven.yml`.
+lint, and extension packaging in `.github/workflows/maven.yml`. The reactor test
+also runs the extension's compiled tests; packaging runs the extension compile
+and VSIX packaging steps.
 
 ## Release flow
 
-1. Merge the release-ready code to the branch from which the release will run. Keep
-   the root Maven version and `vscode-extension/package.json` on the same
-   `-SNAPSHOT` version (currently `1.0.3-SNAPSHOT`).
-2. Configure all required repository secrets and ensure the selected branch allows
-   the workflow to push the next-snapshot commit.
+1. Merge release-ready code to the branch from which the release will run. Before
+   dispatch, confirm the latest run of `.github/workflows/maven.yml` passed on that
+   branch. Keep the root Maven version and `vscode-extension/package.json` on the
+   same `-SNAPSHOT` version (currently `1.0.3-SNAPSHOT`).
+2. Configure all required repository secrets and ensure branch protection allows
+   GitHub Actions to push both the release-version commit and the next-snapshot
+   commit to the selected branch.
 3. In GitHub Actions, run **Publish release** using **Run workflow** and select that
-   branch. The release version is derived by removing `-SNAPSHOT` from the root
-   Maven version; no publishing workflow should be run for an existing release tag.
-4. The workflow runs Maven and extension checks, validates Maven Central metadata,
-   aligns the extension version, packages the VSIX, deploys Java modules, publishes
-   the extension, and creates a GitHub Release with the VSIX attached.
-5. After successful publication, the workflow advances Maven and VS Code versions
-   to the next `-SNAPSHOT` and pushes that change to the selected branch.
+   branch. The workflow only accepts a branch whose Maven version ends in
+   `-SNAPSHOT`, derives the release version by removing that suffix, and refuses
+   to run if the release tag already exists.
+4. The workflow runs the Maven reactor tests (including the extension's compiled
+   tests), checks release-version alignment, validates Maven Central metadata,
+   lints the extension, and packages a VSIX. It then publishes the Java modules
+   and the VSIX to their respective registries.
+5. Once both publications succeed, the workflow commits and pushes the release
+   versions to the selected branch. It creates the GitHub Release and tag at that
+   release-version commit, with the VSIX attached, then commits and pushes the
+   next snapshot version. The tag therefore identifies source files set to the
+   published version, while the branch ends at the next snapshot.
 
 For the current release this produces version `1.0.3`, followed by
 `1.0.4-SNAPSHOT` on the release branch.
@@ -70,10 +79,19 @@ For the current release this produces version `1.0.3`, followed by
 
 ## Notes
 
-- Maven Central and Marketplace do not provide a shared transaction. If one channel
-  accepts a release and another fails, do not rerun the entire workflow blindly:
-  published versions are immutable. Resolve the partially published release before
-  retrying, and only republish the extension version if Marketplace has not accepted it.
+- Maven Central and the Marketplace do not provide a shared transaction, and
+  published versions are immutable. If a run fails during either publication,
+  inspect both registries before retrying. Maven Central is configured to ignore
+  components that were already published; the Marketplace may reject a repeat
+  publication of a version it already accepted. Resolve which channel still needs
+  publication rather than blindly rerunning or trying to roll back a published
+  artifact.
+- The release-version commit is pushed only after both registries accept the
+  release. If that push fails, or a later release/tag/snapshot step fails, inspect
+  the selected branch and GitHub tag before taking action. Complete only the
+  missing step: if the release commit was pushed, the tag must target that commit;
+  if the tag exists, finish the next-snapshot update without republishing. Do not
+  rerun the full workflow after a publication or tag may already exist.
 - The workflow does not run automatically on tags; publication requires an explicit
   manual dispatch from a branch.
 - The README's dependency example uses the latest intended release version, not the
