@@ -126,7 +126,9 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 - **VS Code Marketplace**: install from the Marketplace listing for automatic update delivery.
 - **Direct VSIX**: download the `.vsix` attached to each GitHub Release and install via **Extensions: Install from VSIX...**.
 
-Repository workflows support both channels: GitHub Release artifacts are always produced, and Marketplace publishing is opt-in via the extension module's publish step.
+The GitHub Actions release workflow publishes the Marketplace extension and attaches
+the matching `.vsix` to the versioned GitHub Release. Marketplace and GitHub Release
+distribution are part of the same manually dispatched release process.
 
 Build ownership is Maven-first for the repository; npm remains the extension-local implementation detail.
 

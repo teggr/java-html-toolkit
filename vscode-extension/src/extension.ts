@@ -527,7 +527,7 @@ function handleDocumentClose(document: vscode.TextDocument): void {
     // Collect previews to close (avoid modifying Map during iteration).
     const previewsToClose: vscode.WebviewPanel[] = [];
 
-    for (const [previewKey, preview] of activePreviews) {
+    for (const preview of activePreviews.values()) {
         // Check if this preview belongs to the closed document.
         if (preview.document.uri.toString() === documentUri) {
             previewsToClose.push(preview.panel);

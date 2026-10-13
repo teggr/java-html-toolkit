@@ -36,7 +36,7 @@ Add `java-html-toolkit-html-catalog` to your project's dependencies, then config
 <dependency>
     <groupId>dev.rebelcraft</groupId>
     <artifactId>java-html-toolkit-html-catalog</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.3</version>
 </dependency>
 ```
 
@@ -78,9 +78,11 @@ This repository now separates the preview contract from templating adapters:
 
 ## Release automation
 
-Releases are currently driven from local/manual workflows:
+Releases are prepared and published through GitHub Actions:
 
-- Unified Maven + VS Code release flow: `docs/RELEASE.md`
+- CI checks: `.github/workflows/maven.yml`
+- Manually dispatched Maven Central, VS Code Marketplace, and GitHub Release flow: `.github/workflows/release.yml`
+- Release prerequisites and verification: `docs/RELEASE.md`
 
 ## Build entry points
 

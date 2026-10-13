@@ -1,0 +1,190 @@
+name: Publish release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: java-html-toolkit-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out selected branch
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_USERNAME
+          server-password: CENTRAL_PASSWORD
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
+
+      - name: Check release secrets
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for secret_name in CENTRAL_USERNAME CENTRAL_PASSWORD GPG_KEY_ID GPG_PRIVATE_KEY GPG_PASSPHRASE VSCE_PAT; do
+            if [[ -z "${!secret_name}" ]]; then
+              echo "Required repository secret $secret_name is not configured." >&2
+              exit 1
+            fi
+          done
+
+      - name: Determine release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_TYPE" != "branch" ]]; then
+            echo "Run this workflow from a branch, not a tag." >&2
+            exit 1
+          fi
+          project_version="$(./mvnw --no-transfer-progress -q -N help:evaluate "-Dexpression=project.version" -DforceStdout)"
+          if [[ "$project_version" != *-SNAPSHOT ]]; then
+            echo "Expected a -SNAPSHOT Maven version, found $project_version." >&2
+            exit 1
+          fi
+          release_version="${project_version%-SNAPSHOT}"
+          if ! [[ "$release_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Maven version is not a supported release version: $release_version" >&2
+            exit 1
+          fi
+          echo "release=$release_version" >> "$GITHUB_OUTPUT"
+          echo "Release version: $release_version"
+
+      - name: Check for an existing release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "Release tag $RELEASE_VERSION already exists; refusing to republish an immutable version." >&2
+            exit 1
+          fi
+
+      - name: Run release tests
+        run: ./mvnw --no-transfer-progress clean test
+
+      - name: Set release versions
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        run: ./mvnw --no-transfer-progress -Pcentral versions:set -DnewVersion="$RELEASE_VERSION" -DprocessAllModules -DgenerateBackupPoms=false
+
+      - name: Align VS Code extension version
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        run: npm version "$RELEASE_VERSION" --no-git-tag-version --prefix vscode-extension
+
+      - name: Verify release version alignment
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          maven_version="$(./mvnw --no-transfer-progress -q -N help:evaluate "-Dexpression=project.version" -DforceStdout)"
+          extension_version="$(node -p "require('./vscode-extension/package.json').version")"
+          if [[ "$maven_version" != "$RELEASE_VERSION" ]]; then
+            echo "Maven version $maven_version does not match $RELEASE_VERSION." >&2
+            exit 1
+          fi
+          if [[ "$extension_version" != "$RELEASE_VERSION" ]]; then
+            echo "VS Code extension version $extension_version does not match $RELEASE_VERSION." >&2
+            exit 1
+          fi
+
+      - name: Check Maven Central metadata
+        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,test-docs,html-catalog -am org.kordamp.maven:pomchecker-maven-plugin:1.14.0:check-maven-central
+
+      - name: Lint VS Code extension
+        working-directory: vscode-extension
+        run: npm run lint
+
+      - name: Package VS Code extension
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        run: npm run package --prefix vscode-extension -- --out "$RUNNER_TEMP/java-html-toolkit-$RELEASE_VERSION.vsix"
+
+      - name: Import GPG signing key
+        env:
+          GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.gnupg"
+          chmod 700 "$HOME/.gnupg"
+          printf '%s' "$GPG_PRIVATE_KEY" | gpg --batch --import
+
+      - name: Publish Java artifacts to Maven Central
+        env:
+          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,test-docs,html-catalog -am deploy -DignorePublishedComponents=true "-Dgpg.keyname=$GPG_KEY_ID" "-Dgpg.passphrase=$GPG_PASSPHRASE"
+
+      - name: Publish VS Code extension to Marketplace
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        working-directory: vscode-extension
+        run: npx vsce publish --packagePath "$RUNNER_TEMP/java-html-toolkit-$RELEASE_VERSION.vsix"
+
+      - name: Create GitHub Release with VSIX
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        run: gh release create "$RELEASE_VERSION" "$RUNNER_TEMP/java-html-toolkit-$RELEASE_VERSION.vsix" --title "$RELEASE_VERSION" --generate-notes --target "$GITHUB_SHA"
+
+      - name: Set next snapshot versions
+        run: ./mvnw --no-transfer-progress -Pcentral versions:set -DnextSnapshot -DprocessAllModules -DgenerateBackupPoms=false
+
+      - name: Align VS Code extension to next snapshot
+        env:
+          NEXT_VERSION: ${{ steps.version.outputs.release }}
+        shell: bash
+        run: |
+          next_version="$(./mvnw --no-transfer-progress -q -N help:evaluate "-Dexpression=project.version" -DforceStdout)"
+          if [[ "$next_version" == "$NEXT_VERSION" || "$next_version" != *-SNAPSHOT ]]; then
+            echo "Expected Maven to advance to a new snapshot version, found $next_version." >&2
+            exit 1
+          fi
+          npm version "$next_version" --no-git-tag-version --prefix vscode-extension
+          extension_version="$(node -p "require('./vscode-extension/package.json').version")"
+          if [[ "$extension_version" != "$next_version" ]]; then
+            echo "VS Code extension version $extension_version does not match next Maven version $next_version." >&2
+            exit 1
+          fi
+
+      - name: Commit and push next snapshot
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- pom.xml ':(glob)**/pom.xml' vscode-extension/package.json vscode-extension/package-lock.json
+          git commit -m "chore: prepare next snapshot after $RELEASE_VERSION" -m "Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>"
+          git push origin "HEAD:$GITHUB_REF"
