@@ -70,11 +70,35 @@ mvn exec:java -Dexec.mainClass=io.github.teggr.html.catalog.CatalogRunner \
 
 ## Architecture seam
 
-This repository now separates the preview contract from templating adapters:
+This repository owns the framework-neutral preview contract and runtime. It does
+not bundle framework-specific template engines:
 
-- The extension only depends on the generic preview API runtime contract.
-- j2html-specific implementation/examples live in a dedicated adapter module.
-- Additional adapters (for example Thymeleaf/JTE) can be implemented independently using the same API.
+- `preview` (`java-html-toolkit-preview`) provides `@Preview`, `PreviewRunner`,
+  and the `PreviewGenerator` SPI. Built-in generators handle `String` and
+  other object return values.
+- The j2html adapter is maintained separately in
+  [`teggr/j2html-toolkit`, module `preview`](https://github.com/teggr/j2html-toolkit/tree/main/preview)
+  and published as `io.github.teggr:j2html-toolkit-preview`. Add that optional
+  dependency to a project whose `@Preview` methods return j2html
+  `DomContent`; the adapter supplies the j2html-specific rendering behavior.
+- The VS Code extension invokes the generic `PreviewRunner`; it does not bundle
+  j2html or require any particular adapter. Only add the adapters your project
+  uses, and use adapter releases documented as compatible with the selected
+  `java-html-toolkit-preview` version.
+
+### Implementing another adapter
+
+An adapter can be maintained in its own module or repository. Depend on
+`java-html-toolkit-preview` and the relevant template engine there, then
+implement `io.github.teggr.html.preview.spi.PreviewGenerator`. Its `supports`
+method should identify the return types it can render, and `generate` should
+invoke the preview method and return the rendered HTML. Register the
+implementation with Java's `ServiceLoader` by adding a
+`META-INF/services/io.github.teggr.html.preview.spi.PreviewGenerator` resource
+containing the implementation's fully qualified class name. Higher
+`priority()` values take precedence over the built-in string and object
+generators. Keeping the engine dependency in the adapter module leaves it
+optional for other users of the generic preview runtime.
 
 ## Release automation
 

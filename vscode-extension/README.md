@@ -89,6 +89,59 @@ Open the Java file in the editor — a **▶ Preview** CodeLens appears above th
 
 If `@Preview("...")` includes a label, that value is used as the preview panel title; otherwise the method name is used.
 
+#### Previewing j2html components
+
+j2html rendering is provided by the optional
+[`j2html-toolkit-preview` adapter](https://github.com/teggr/j2html-toolkit/tree/main/preview),
+not by the generic preview runtime or VS Code extension. Add the generic runtime
+and the adapter to the example project's `pom.xml`. Select a published adapter
+version that is compatible with the chosen runtime version; the placeholder
+below must be replaced before building.
+
+```xml
+<properties>
+    <java-html-toolkit.version>1.0.3</java-html-toolkit.version>
+    <j2html-toolkit.version>COMPATIBLE_PUBLISHED_VERSION</j2html-toolkit.version>
+</properties>
+
+<dependencies>
+    <dependency>
+        <groupId>io.github.teggr</groupId>
+        <artifactId>java-html-toolkit-preview</artifactId>
+        <version>${java-html-toolkit.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>io.github.teggr</groupId>
+        <artifactId>j2html-toolkit-preview</artifactId>
+        <version>${j2html-toolkit.version}</version>
+    </dependency>
+</dependencies>
+```
+
+The adapter also brings in its j2html dependency. A preview method can return
+j2html `DomContent`:
+
+```java
+import static j2html.TagCreator.div;
+
+import io.github.teggr.html.preview.Preview;
+import j2html.tags.DomContent;
+
+public class MyPreviews {
+
+    @Preview("Main layout")
+    public DomContent mainLayout() {
+        return div("Hello from j2html");
+    }
+}
+```
+
+The adapter is discovered through `PreviewGenerator`'s Java `ServiceLoader`
+registration when the project runs `PreviewRunner`; the extension needs no
+j2html-specific configuration. Without the adapter, the generic runtime
+supports its built-in `String` and object-return behavior, but does not render
+j2html `DomContent`.
+
 Once a preview is open:
 
 - saving the preview source file reruns the preview after a short debounce
