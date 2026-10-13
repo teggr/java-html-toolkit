@@ -1,0 +1,15 @@
+<nav th:fragment="menu(activePath)" aria-label="Main navigation">
+    <ul class="menu">
+        <li>
+            <a href="/" th:attr='aria-current=${activePath == "/" ? "page" : null}'>
+                Home
+            </a>
+        </li>
+        <li>
+            <a href="/#collection" th:attr='aria-current=${activePath == "/books" ? "page" : null}'>
+                Books
+            </a>
+        </li>
+        <li><a href="/#about">Our story</a></li>
+    </ul>
+</nav>

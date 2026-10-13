@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.teggr</groupId>
+        <artifactId>java-html-toolkit</artifactId>
+        <version>1.0.3-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <groupId>io.github.teggr</groupId>
+    <artifactId>java-html-toolkit-preview-thymeleaf</artifactId>
+    <packaging>jar</packaging>
+
+    <name>java-html-toolkit-preview-thymeleaf</name>
+    <description>Optional Thymeleaf adapter for the Java HTML Toolkit preview runtime.</description>
+    <url>https://github.com/teggr/java-html-toolkit</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.teggr</groupId>
+            <artifactId>java-html-toolkit-preview</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.thymeleaf</groupId>
+            <artifactId>thymeleaf</artifactId>
+            <version>${thymeleaf.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

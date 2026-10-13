@@ -1,0 +1,8 @@
+<article th:fragment="details(book)" class="book-details">
+    <p class="eyebrow" th:text="${book.category}">Category</p>
+    <h1 th:text="${book.title}">Book title</h1>
+    <p>by <span th:text="${book.author}">Author</span></p>
+    <p th:text="${book.description}">Book description</p>
+    <p class="price" th:text="'£' + ${#numbers.formatDecimal(book.price, 1, 2)}">£0.00</p>
+    <a class="book-link" href="/">← Back to all books</a>
+</article>
