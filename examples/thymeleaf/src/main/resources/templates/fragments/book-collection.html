@@ -1,0 +1,9 @@
+<section th:fragment="collection(books)" id="collection" aria-labelledby="collection-title">
+    <p class="eyebrow">The shelves</p>
+    <h2 id="collection-title">Find your next favourite</h2>
+    <div class="book-grid">
+        <div th:each="book : ${books}">
+            <div th:replace="~{fragments/book-card :: card(${book})}"></div>
+        </div>
+    </div>
+</section>

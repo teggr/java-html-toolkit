@@ -1,0 +1,4 @@
+<header th:fragment="header(activePath)" class="site-header">
+    <a class="wordmark" href="/">Chapter &amp; Co.</a>
+    <div th:replace="~{fragments/menu :: menu(${activePath})}"></div>
+</header>

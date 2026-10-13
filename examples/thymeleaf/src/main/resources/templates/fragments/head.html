@@ -1,0 +1,35 @@
+<head th:fragment="head(pageTitle)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${pageTitle} + ' | Chapter &amp; Co.'">Chapter &amp; Co.</title>
+    <style>
+        :root {
+            color-scheme: light;
+            font-family: Georgia, "Times New Roman", serif;
+            color: #28251f;
+            background: #f7f4ed;
+        }
+
+        * { box-sizing: border-box; }
+        body { margin: 0; }
+        a { color: inherit; }
+        .site-header, main, .site-footer { max-width: 68rem; margin: 0 auto; padding: 1.5rem; }
+        .site-header { display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
+        .wordmark { color: #315b49; font-size: 1.5rem; font-weight: bold; text-decoration: none; }
+        .menu { display: flex; flex-wrap: wrap; gap: 1.25rem; list-style: none; margin: 0; padding: 0; }
+        .menu a { text-decoration: none; }
+        .menu a[aria-current="page"] { color: #315b49; font-weight: bold; text-decoration: underline; text-underline-offset: .3rem; }
+        .eyebrow { color: #68786a; font-size: .8rem; font-weight: bold; letter-spacing: .12em; text-transform: uppercase; }
+        .book-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+        .book-card, .book-details { border: 1px solid #ded8cb; border-radius: .75rem; background: #fffdf8; padding: 1.25rem; }
+        .book-card h3 { margin: .5rem 0; }
+        .book-card p, .book-details p { line-height: 1.6; }
+        .book-link { color: #315b49; font-weight: bold; }
+        .price { color: #315b49; font-weight: bold; }
+        .site-footer { color: #68786a; border-top: 1px solid #ded8cb; }
+        .hero { padding: 2rem 0 3rem; }
+        .hero h1 { max-width: 15ch; margin: .5rem 0; font-size: clamp(2.5rem, 7vw, 4.5rem); }
+        .hero p { max-width: 38rem; font-size: 1.15rem; line-height: 1.6; }
+        @media (max-width: 36rem) { .site-header { align-items: flex-start; flex-direction: column; gap: 1rem; } }
+    </style>
+</head>

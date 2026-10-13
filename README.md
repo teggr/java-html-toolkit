@@ -6,6 +6,8 @@ Toolkit for developing, previewing, verifying and testing HTML-producing Java co
 
 - `vscode-extension`: VS Code extension that discovers `@Preview` methods, compiles projects, and renders HTML. It is built from the root Maven reactor and keeps its npm scripts as the local implementation detail.
 - `preview` (`java-html-toolkit-preview`): annotation (`@Preview`) and runtime entrypoint (`PreviewRunner`), extensible via the `PreviewGenerator` SPI.
+- `preview-thymeleaf` (`java-html-toolkit-preview-thymeleaf`): optional Thymeleaf `PreviewGenerator` adapter for classpath templates and model data.
+- `examples` (`java-html-toolkit-examples`): nested sample applications, including a Spring Boot bookstore with Thymeleaf page, fragment, and `@Preview` examples.
 - `html-catalog` (`java-html-toolkit-html-catalog`): scans the compiled classpath for `@Preview` methods and generates a self-contained, browsable static HTML catalog.
 - `test-docs`: publishable documentation/test support module for preview examples and related HTML tooling fixtures.
 
@@ -114,10 +116,57 @@ not bundle framework-specific template engines:
   and published as `io.github.teggr:j2html-toolkit-preview`. Add that optional
   dependency to a project whose `@Preview` methods return j2html
   `DomContent`; the adapter supplies the j2html-specific rendering behavior.
+- The Thymeleaf adapter is provided in this repository as the optional
+  `preview-thymeleaf` module and published as
+  `io.github.teggr:java-html-toolkit-preview-thymeleaf`; it supports
+  `ThymeleafPreview` values containing a classpath template name and model.
 - The VS Code extension invokes the generic `PreviewRunner`; it does not bundle
   j2html or require any particular adapter. Only add the adapters your project
   uses, and use adapter releases documented as compatible with the selected
   `java-html-toolkit-preview` version.
+
+### Thymeleaf adapter
+
+Add the optional adapter to a project whose `@Preview` methods return a
+`ThymeleafPreview`. It brings in the generic preview API and Thymeleaf engine;
+projects that do not use this adapter do not acquire a Thymeleaf dependency.
+
+```xml
+<dependency>
+    <groupId>io.github.teggr</groupId>
+    <artifactId>java-html-toolkit-preview-thymeleaf</artifactId>
+    <version>1.0.3</version>
+</dependency>
+```
+
+The default engine resolves HTML templates from
+`src/main/resources/templates/`, using the template name without the
+`.html` suffix. Provide template variables as a `Map<String, Object>`:
+
+```java
+import io.github.teggr.html.preview.Preview;
+import io.github.teggr.html.preview.thymeleaf.ThymeleafPreview;
+
+import java.util.Map;
+
+public class GreetingPreview {
+    @Preview("Greeting")
+    public ThymeleafPreview greeting() {
+        return new ThymeleafPreview("greeting", Map.of("name", "Ada"));
+    }
+}
+```
+
+For this example, create `src/main/resources/templates/greeting.html`:
+
+```html
+<main>Hello, <span th:text="${name}">friend</span>!</main>
+```
+
+When `java-html-toolkit-preview-thymeleaf` is on the runtime classpath,
+`PreviewRunner` discovers the adapter through `ServiceLoader` and renders the
+template using the returned model. No custom engine setup or VS Code extension
+configuration is required.
 
 ### Implementing another adapter
 
@@ -132,6 +181,22 @@ containing the implementation's fully qualified class name. Higher
 `priority()` values take precedence over the built-in string and object
 generators. Keeping the engine dependency in the adapter module leaves it
 optional for other users of the generic preview runtime.
+
+## Example applications
+
+The `examples` Maven aggregator contains independently buildable sample
+applications. The `examples/thymeleaf` module is a Spring Boot bookstore with
+home and book-detail pages, shared Thymeleaf fragments, and `@Preview` methods
+for each page and reusable component. From the repository root, run:
+
+```sh
+./mvnw -pl examples/thymeleaf -am package
+java -jar examples/thymeleaf/target/java-html-toolkit-examples-thymeleaf-1.0.3-SNAPSHOT.jar
+```
+
+Open `http://localhost:8080` for the bookstore. The sample previews can also be
+run by the VS Code extension when the example module is opened as a Maven
+project; its previews use the same classpath templates as the running app.
 
 ## Release automation
 

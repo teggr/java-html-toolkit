@@ -8,10 +8,10 @@ import java.lang.annotation.Target;
 /**
  * Marks a no-argument method as an HTML preview.
  *
- * <p>The annotated method must take no arguments and return a
- * {@link String} of HTML.
- * The method may be public, protected, package-private, or private; the runner
- * will access it reflectively.
+ * <p>The annotated method must take no arguments. By default, it returns a
+ * {@link String} of HTML; an optional {@link io.github.teggr.html.preview.spi.PreviewGenerator}
+ * may support other return types. The method may be public, protected,
+ * package-private, or private; the runner will access it reflectively.
  * The Java HTML Tooling VS Code extension discovers
  * methods carrying this annotation, compiles the surrounding Maven project, and
  * renders the returned HTML inside an editor side-panel.

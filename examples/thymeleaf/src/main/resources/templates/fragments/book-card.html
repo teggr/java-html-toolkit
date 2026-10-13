@@ -1,0 +1,10 @@
+<article th:fragment="card(book)" class="book-card">
+    <p class="eyebrow" th:text="${book.category}">Category</p>
+    <h3>
+        <a class="book-link" th:href="'/books/' + ${book.id}"
+           th:text="${book.title}">Book title</a>
+    </h3>
+    <p>by <span th:text="${book.author}">Author</span></p>
+    <p th:text="${book.description}">Book description</p>
+    <p class="price" th:text="'£' + ${#numbers.formatDecimal(book.price, 1, 2)}">£0.00</p>
+</article>

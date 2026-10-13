@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head th:replace="~{fragments/head :: head('Independent bookshop')}"></head>
+<body>
+<header th:replace="~{fragments/header :: header(${activePath})}"></header>
+<main>
+    <section class="hero" id="about">
+        <p class="eyebrow">Independent bookshop · Est. 1987</p>
+        <h1>A little more room for a good story.</h1>
+        <p>Thoughtfully chosen books, friendly recommendations, and a quiet corner
+            to stay awhile. Welcome to Chapter &amp; Co.</p>
+    </section>
+    <div th:replace="~{fragments/book-collection :: collection(${books})}"></div>
+</main>
+<footer th:replace="~{fragments/footer :: footer}"></footer>
+</body>
+</html>
