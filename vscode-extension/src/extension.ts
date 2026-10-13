@@ -4,10 +4,11 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { resolveJavaExtensionClasspath } from './javaExtension';
 import {
-    discoverPreviewTargets,
-    discoverPreviewTargetsWithRegexFallback,
+    discoverPreviewTargetsWithFallback,
     type PreviewSymbolNode,
 } from './previewDiscovery';
+import { findMavenProjectContext, buildMavenArgs, type MavenProjectContext } from './mavenWorkspace';
+import { injectCssIntoHtml } from './previewHtml';
 import {
     applyJavaInvalidation,
     applyPomInvalidation,
@@ -30,6 +31,7 @@ interface ActivePreview {
     methodName: string;
     previewLabel?: string;
     projectRoot: string;
+    reactorRoot: string;
     lastRenderedHtml?: string;
     refreshToken: number;
 }
@@ -149,10 +151,7 @@ class PreviewCodeLensProvider implements vscode.CodeLensProvider {
     async provideCodeLenses(document: vscode.TextDocument): Promise<vscode.CodeLens[]> {
         const text = document.getText();
         const symbols = await getJavaDocumentSymbols(document.uri);
-        const previewTargets = discoverPreviewTargets(text, symbols);
-        const resolvedTargets = previewTargets.length > 0
-            ? previewTargets
-            : discoverPreviewTargetsWithRegexFallback(text);
+        const resolvedTargets = discoverPreviewTargetsWithFallback(text, symbols);
 
         return resolvedTargets.map((target) => {
             const lineText = document.lineAt(target.annotationLine).text;
@@ -286,13 +285,23 @@ function mapSymbolKind(kind: vscode.SymbolKind): PreviewSymbolNode['kind'] | und
 async function runPreview(context: vscode.ExtensionContext, args: PreviewCommandArgs): Promise<void> {
     const { document, className, methodName, previewLabel } = args;
 
-    const projectRoot = findMavenRoot(document.uri.fsPath);
-    if (!projectRoot) {
+    let projectContext: MavenProjectContext | undefined;
+    try {
+        projectContext = findMavenProjectContext(document.uri.fsPath);
+    } catch (err: unknown) {
+        vscode.window.showErrorMessage(
+            `Java HTML Tooling: Could not inspect the Maven project: ${toErrorMessage(err)}`,
+        );
+        return;
+    }
+
+    if (!projectContext) {
         vscode.window.showErrorMessage(
             'Java HTML Tooling: Cannot find a Maven project root (pom.xml) for this file.',
         );
         return;
     }
+    const { projectRoot } = projectContext;
 
     // Reuse the existing preview panel if one is already open for this method.
     const previewKey = getPreviewKey(document.uri.toString(), methodName);
@@ -323,6 +332,7 @@ async function runPreview(context: vscode.ExtensionContext, args: PreviewCommand
         methodName,
         previewLabel,
         projectRoot,
+        reactorRoot: projectContext.reactorRoot,
         refreshToken: 0,
     });
 
@@ -381,20 +391,17 @@ async function refreshPreviewInternal(
 
     const { panel, className, methodName, projectRoot } = preview;
 
-    if (mode === 'full') {
-        panel.webview.html = await loadingHtml(panel, projectRoot, methodName);
-    }
-
     try {
         if (mode === 'full') {
+            panel.webview.html = await loadingHtml(panel, projectRoot, methodName);
             // Compile test sources so the annotated method class is available.
-            await ensureProjectCompiled(preview.document.uri, projectRoot);
+            await ensureProjectCompiled(preview.document.uri, projectContextForPreview(preview));
             if (!isRefreshCurrent(previewKey, refreshToken)) {
                 return;
             }
 
             // Resolve the full runtime + test classpath via Maven.
-            const classpath = await resolveClasspath(preview.document.uri, projectRoot);
+            const classpath = await resolveClasspath(preview.document.uri, projectContextForPreview(preview));
             if (!isRefreshCurrent(previewKey, refreshToken)) {
                 return;
             }
@@ -428,8 +435,15 @@ async function refreshPreviewInternal(
         }
 
         const message = err instanceof Error ? err.message : String(err);
-        panel.webview.html = await errorHtml(panel, projectRoot, message);
+        panel.webview.html = errorHtml(message);
     }
+}
+
+function projectContextForPreview(preview: ActivePreview): MavenProjectContext {
+    return {
+        projectRoot: preview.projectRoot,
+        reactorRoot: preview.reactorRoot,
+    };
 }
 
 /**
@@ -446,12 +460,10 @@ function handleFileChange(uri: vscode.Uri): void {
 
     // Check which active previews are affected by this file change.
     for (const [previewKey, preview] of activePreviews) {
-        const belongsToProject = isPathWithinProject(filePath, preview.projectRoot);
-        if (!belongsToProject) {
-            continue;
-        }
-
         if (isPomFile) {
+            if (!isPathWithinProject(filePath, preview.reactorRoot)) {
+                continue;
+            }
             const projectState = getProjectState(preview.projectRoot);
             applyPomInvalidation(projectState);
             debugLog(runtimeSettings, `Detected pom.xml change, invalidating compile/classpath for ${preview.projectRoot}`);
@@ -460,11 +472,17 @@ function handleFileChange(uri: vscode.Uri): void {
         }
 
         if (isCssFile) {
+            if (!isPathWithinProject(filePath, preview.projectRoot)) {
+                continue;
+            }
             schedulePreviewRefresh(previewKey, 'css-only');
             continue;
         }
 
         if (isJavaFile) {
+            if (!isPathWithinProject(filePath, preview.reactorRoot)) {
+                continue;
+            }
             const projectState = getProjectState(preview.projectRoot);
             applyJavaInvalidation(projectState);
             debugLog(runtimeSettings, `Detected Java source change, invalidating compile cache for ${preview.projectRoot}`);
@@ -617,60 +635,12 @@ async function processHtmlWithCss(
         config.inlineStyles ? `<style>${config.inlineStyles}</style>` : '',
     ].filter(Boolean).join('\n    ');
 
-    if (!cssContent) {
-        return html; // No CSS to inject
-    }
-
-    // Detect if this is a full HTML document or a fragment
-    const isFullDocument = /<html[>\s]/i.test(html) || /<head[>\s]/i.test(html);
-
-    if (!isFullDocument) {
-        // Fragment: wrap in a full HTML template with CSS
-        return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    ${cssContent}
-</head>
-<body>
-    ${html}
-</body>
-</html>`;
-    }
-
-    // Full document: inject CSS into the <head> section
-    const headMatch = html.match(/<head[^>]*>/i);
-    if (headMatch) {
-        const headEndIndex = headMatch.index! + headMatch[0].length;
-        return html.slice(0, headEndIndex) + '\n    ' + cssContent + html.slice(headEndIndex);
-    }
-
-    // Fallback: try to inject before </head>
-    return html.replace(/(<\/head>)/i, `    ${cssContent}\n$1`);
+    return injectCssIntoHtml(html, cssContent);
 }
 
 // ---------------------------------------------------------------------------
 // Maven helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Walks up the directory tree looking for the nearest {@code pom.xml}.
- * Returns {@code null} when no pom.xml can be found.
- */
-function findMavenRoot(filePath: string): string | null {
-    let dir = path.dirname(filePath);
-    const root = path.parse(dir).root;
-
-    while (dir !== root) {
-        if (fs.existsSync(path.join(dir, 'pom.xml'))) {
-            return dir;
-        }
-        dir = path.dirname(dir);
-    }
-
-    return null;
-}
 
 function execMaven(cwd: string, args: string[]): Promise<string> {
     return new Promise((resolve, reject) => {
@@ -702,7 +672,11 @@ function execMaven(cwd: string, args: string[]): Promise<string> {
  * Resolves the full compile + test runtime classpath via the Java extension and
  * returns a colon/semicolon-separated string ready to pass to {@code java -cp}.
  */
-async function resolveClasspath(documentUri: vscode.Uri, projectRoot: string): Promise<string> {
+async function resolveClasspath(
+    documentUri: vscode.Uri,
+    projectContext: MavenProjectContext,
+): Promise<string> {
+    const { projectRoot } = projectContext;
     const projectState = getProjectState(projectRoot);
     if (projectState.cachedClasspath && !projectState.needsClasspathRefresh) {
         return projectState.cachedClasspath;
@@ -718,7 +692,7 @@ async function resolveClasspath(documentUri: vscode.Uri, projectRoot: string): P
             if (resolver === 'java') {
                 classpathEntries = await resolveJavaExtensionClasspath(documentUri, projectRoot);
             } else {
-                classpathEntries = await resolveMavenClasspathEntries(projectRoot);
+                classpathEntries = await resolveMavenClasspathEntries(projectContext);
             }
 
             debugLog(runtimeSettings, `Resolved classpath using ${resolver} strategy.`);
@@ -742,15 +716,18 @@ async function resolveClasspath(documentUri: vscode.Uri, projectRoot: string): P
     return classpath;
 }
 
-async function resolveMavenClasspathEntries(projectRoot: string): Promise<string[]> {
+async function resolveMavenClasspathEntries(projectContext: MavenProjectContext): Promise<string[]> {
+    const { projectRoot, reactorRoot } = projectContext;
     const cpFile = path.join(projectRoot, 'target', 'java-html-toolkit-classpath.txt');
 
-    await execMaven(projectRoot, [
+    await execMaven(reactorRoot, buildMavenArgs(projectContext, [
+        // Keep reactor outputs available while Maven resolves sibling-module dependencies.
+        'test-compile',
         'dependency:build-classpath',
-        `-Dmdep.outputFile=${cpFile}`,
+        '-Dmdep.outputFile=${project.build.directory}/java-html-toolkit-classpath.txt',
         '-Dmdep.includeScope=test',
         '-q',
-    ]);
+    ]));
 
     const deps = fs
         .readFileSync(cpFile, 'utf-8')
@@ -765,8 +742,11 @@ async function resolveMavenClasspathEntries(projectRoot: string): Promise<string
     ];
 }
 
-async function ensureProjectCompiled(documentUri: vscode.Uri, projectRoot: string): Promise<void> {
-    const projectState = getProjectState(projectRoot);
+async function ensureProjectCompiled(
+    documentUri: vscode.Uri,
+    projectContext: MavenProjectContext,
+): Promise<void> {
+    const projectState = getProjectState(projectContext.projectRoot);
     if (!projectState.needsCompile) {
         return;
     }
@@ -780,7 +760,7 @@ async function ensureProjectCompiled(documentUri: vscode.Uri, projectRoot: strin
             if (resolver === 'java') {
                 await compileProjectWithJavaExtension(documentUri);
             } else {
-                await compileProjectWithMaven(projectRoot);
+                await compileProjectWithMaven(projectContext);
             }
 
             debugLog(runtimeSettings, `Compiled project using ${resolver} strategy.`);
@@ -800,8 +780,11 @@ async function ensureProjectCompiled(documentUri: vscode.Uri, projectRoot: strin
     projectState.needsCompile = false;
 }
 
-async function compileProjectWithMaven(projectRoot: string): Promise<void> {
-    await execMaven(projectRoot, ['test-compile', '-q']);
+async function compileProjectWithMaven(projectContext: MavenProjectContext): Promise<void> {
+    await execMaven(
+        projectContext.reactorRoot,
+        buildMavenArgs(projectContext, ['test-compile', '-q']),
+    );
 }
 
 async function compileProjectWithJavaExtension(documentUri: vscode.Uri): Promise<void> {
@@ -994,16 +977,12 @@ async function loadingHtml(panel: vscode.WebviewPanel, projectRoot: string, meth
 </html>`;
 }
 
-async function errorHtml(panel: vscode.WebviewPanel, projectRoot: string, message: string): Promise<string> {
-    const cssLinks = await resolveCssFiles(panel, projectRoot);
-    const cssContent = cssLinks.join('\n    ');
-    
+function errorHtml(message: string): string {
     return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Java HTML Preview – Error</title>
-    ${cssContent}
 </head>
 <body>
   <h3>Preview failed</h3>

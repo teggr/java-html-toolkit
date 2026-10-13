@@ -199,3 +199,23 @@ export function discoverPreviewTargetsWithRegexFallback(documentText: string): P
 
     return targets;
 }
+
+export function discoverPreviewTargetsWithFallback(
+    documentText: string,
+    symbols: PreviewSymbolNode[],
+): PreviewTarget[] {
+    const targets = discoverPreviewTargets(documentText, symbols);
+    const seenAnnotations = new Set(targets.map((target) => target.annotationLine));
+    const seenMethods = new Set(targets.map((target) => `${target.className}#${target.methodName}`));
+
+    for (const target of discoverPreviewTargetsWithRegexFallback(documentText)) {
+        const key = `${target.className}#${target.methodName}`;
+        if (!seenAnnotations.has(target.annotationLine) && !seenMethods.has(key)) {
+            targets.push(target);
+            seenAnnotations.add(target.annotationLine);
+            seenMethods.add(key);
+        }
+    }
+
+    return targets.sort((left, right) => left.annotationLine - right.annotationLine);
+}

@@ -121,6 +121,32 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 4. **Run** — `java -cp <classpath> io.github.teggr.html.preview.PreviewRunner <className> <methodName>` is executed and its stdout (the rendered HTML) is displayed in the WebView panel.
 5. **Refresh** — when CSS changes, the extension reuses the last rendered HTML and only reinjects styles into the WebView instead of rerunning the preview method.
 
+## `@Preview` contract and verification
+
+Discovery recognizes `@Preview` and the positional label form `@Preview("label")` on their own source line. Preview methods must be no-argument, non-`void` instance methods on a class with a no-argument constructor. Any visibility is accepted. `String` results are rendered directly; other non-`void` results use `toString()` unless a `PreviewGenerator` SPI implementation handles the result. A `null` or empty result displays the “method returned no output” placeholder.
+
+The regex fallback handles only the first top-level class and conventional one-line annotation/method declarations. Fully qualified annotation names and multi-line annotation arguments are not recognized by fallback discovery. The panel label is extracted from `@Preview("label")`; other annotation attributes remain available to Java-side preview generators but are not used by the VS Code panel title.
+
+The extension's automated tests cover symbol and regex discovery (including partial symbol responses and changed source text), Maven reactor selection and module dependency inclusion, runtime strategy ordering and cache invalidation, and CSS injection into fragments and full documents. The Maven fixtures in `test-fixtures/` provide clean single-module and multi-module projects; install the preview runtime first, then run the fixture builds from the repository root:
+
+```powershell
+.\mvnw.cmd -pl preview install
+.\mvnw.cmd -f vscode-extension\test-fixtures\single-module\pom.xml clean test-compile dependency:build-classpath '-Dmdep.outputFile=${project.build.directory}/java-html-toolkit-classpath.txt' '-Dmdep.includeScope=test' -q
+.\mvnw.cmd -f vscode-extension\test-fixtures\multi-module\pom.xml -pl preview-app -am clean test-compile dependency:build-classpath '-Dmdep.outputFile=${project.build.directory}/java-html-toolkit-classpath.txt' '-Dmdep.includeScope=test' -q
+```
+
+| Scenario | Verification | Evidence |
+| --- | --- | --- |
+| Clean single-module Maven workspace | Build and run the single-module fixture's `@Preview` method. | Verified: `PreviewRunner` returned `<main>single module</main>`. |
+| Multi-module reactor with sibling dependency | Build the multi-module fixture using `-pl preview-app -am` and run `MultiPreview.render()`. | Verified: `PreviewRunner` returned `<h1>multi module</h1>`, including the sibling module on the runtime classpath. |
+| Source edits and clean builds | The extension tests rediscovery against changed source; for the live check, open a fixture, preview a method, save an edit, then run `clean` and preview again. | Discovery test automated; watcher and panel refresh require the Extension Development Host. |
+| Dependency changes and classpath invalidation | Change a fixture dependency in its `pom.xml`, save it, and refresh the preview. The next diagnostics report should show refreshed compile/classpath state. | POM invalidation policy automated; extension host check is manual. |
+| Compilation failure | Introduce a Java syntax error in a fixture preview and refresh it. The panel should show the build failure details instead of retaining stale rendered HTML; restore the source afterward. | Error display requires the Extension Development Host. |
+| Runtime and classpath fallbacks | With Red Hat Java installed, try both `maven-first` and `java-first`. Enable `java-html-toolkit.debugLogs` to see failed strategies and fallback reasons. | Resolver ordering and fallback policy automated; Java extension integration is manual. |
+| Panel reuse and CSS | Invoke the same preview twice and confirm the existing panel is revealed. Change the fixture CSS and confirm styles update without rerunning the method; also try `inlineStyles` and a CSS file/glob setting. | CSS insertion automated; file resolution and panel reuse require the Extension Development Host. |
+
+Panel reuse, Maven/Java host integration, and watcher-driven refreshes require the VS Code Extension Development Host and are manual checks; pure discovery, reactor selection, cache policy, and CSS insertion are covered by the extension tests. If both runtime strategies fail, the panel displays the collected build or classpath errors rather than stale preview output.
+
 ## Release and installation
 
 - **VS Code Marketplace**: install from the Marketplace listing for automatic update delivery.
