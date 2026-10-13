@@ -34,7 +34,7 @@ Add `java-html-toolkit-html-catalog` to your project's dependencies, then config
 
 ```xml
 <dependency>
-    <groupId>dev.rebelcraft</groupId>
+    <groupId>io.github.teggr</groupId>
     <artifactId>java-html-toolkit-html-catalog</artifactId>
     <version>1.0.3</version>
 </dependency>
@@ -50,7 +50,7 @@ Add `java-html-toolkit-html-catalog` to your project's dependencies, then config
             <phase>verify</phase>
             <goals><goal>java</goal></goals>
             <configuration>
-                <mainClass>dev.rebelcraft.html.catalog.CatalogRunner</mainClass>
+                <mainClass>io.github.teggr.html.catalog.CatalogRunner</mainClass>
             </configuration>
         </execution>
     </executions>
@@ -64,7 +64,7 @@ left, and a live iframe preview on the right with a **Source** tab.
 You can also run the catalog generator on-demand:
 
 ```
-mvn exec:java -Dexec.mainClass=dev.rebelcraft.html.catalog.CatalogRunner \
+mvn exec:java -Dexec.mainClass=io.github.teggr.html.catalog.CatalogRunner \
               -Dexec.args="--output-dir target/html-catalog"
 ```
 

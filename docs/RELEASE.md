@@ -10,10 +10,10 @@ the VSIX attached, and then commits the next snapshot version to the selected br
 ## Scope
 
 Java artifacts published to Maven Central:
-- dev.rebelcraft:java-html-toolkit (parent POM)
-- dev.rebelcraft:java-html-toolkit-preview
-- dev.rebelcraft:java-html-toolkit-test-docs
-- dev.rebelcraft:java-html-toolkit-html-catalog
+- io.github.teggr:java-html-toolkit (parent POM)
+- io.github.teggr:java-html-toolkit-preview
+- io.github.teggr:java-html-toolkit-test-docs
+- io.github.teggr:java-html-toolkit-html-catalog
 
 VS Code extension:
 - RebelCraft.java-html-toolkit
@@ -22,7 +22,7 @@ VS Code extension:
 
 - Java 17+
 - Node.js 18+
-- A Maven Central publishing token and namespace access for `dev.rebelcraft`.
+- A Maven Central publishing token and namespace access for `io.github.teggr`.
 - A GPG signing key available as a private-key export and its passphrase.
 - VS Code Marketplace publisher access for `RebelCraft`, with a PAT allowed to publish extensions.
 - GitHub Actions allowed to write repository contents and push to the selected release branch. Branch protection must permit the workflow's version-bump commit.

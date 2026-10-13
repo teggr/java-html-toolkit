@@ -1,0 +1,3 @@
+io.github.teggr.html.preview.spi.LowPriorityMethodPreviewGenerator
+io.github.teggr.html.preview.spi.HighPriorityMethodPreviewGenerator
+io.github.teggr.html.preview.spi.AccessFailingMethodPreviewGenerator
