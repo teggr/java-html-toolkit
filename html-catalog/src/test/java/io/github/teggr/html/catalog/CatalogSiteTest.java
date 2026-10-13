@@ -102,6 +102,45 @@ class CatalogSiteTest {
     }
 
     @Test
+    void overloadedMethodsGetDistinctFramePaths() throws Exception {
+        CatalogEntry noArgs = new CatalogEntry(
+                "Overloads", "Same label", "", 0,
+                "com.example.Overloads", "preview", "public java.lang.String preview()"
+        );
+        CatalogEntry withArgs = new CatalogEntry(
+                "Overloads", "Same label", "", 0,
+                "com.example.Overloads", "preview", "public java.lang.String preview(java.lang.String)"
+        );
+
+        new CatalogSite().generate(List.of(
+                ok(noArgs, "<p>no arguments</p>"),
+                error(withArgs, "Unsupported signature")
+        ), tempDir);
+
+        File framesDir = new File(tempDir, "frames/com/example/Overloads");
+        File[] frames = framesDir.listFiles((dir, name) -> name.startsWith("preview-") && name.endsWith(".html"));
+        assertNotNull(frames);
+        assertEquals(2, frames.length);
+        String index = Files.readString(new File(tempDir, "index.html").toPath());
+        assertTrue(index.contains("frameSrc"));
+    }
+
+    @Test
+    void indexContainsRenderedHtmlForSourceTabAndEscapesScriptTerminators() throws Exception {
+        CatalogEntry e = entry("Markup", "</script>", "com.example.Markup", "preview");
+        new CatalogSite().generate(
+                List.of(ok(e, "<script>run()</script>")),
+                tempDir
+        );
+
+        String index = Files.readString(new File(tempDir, "index.html").toPath());
+        assertTrue(index.contains("\"source\":\"\\u003cscript\\u003erun()\\u003c/script\\u003e\""));
+        assertTrue(index.contains("\"name\":\"\\u003c/script\\u003e\""));
+        assertTrue(index.contains("currentItem ? currentItem.source : ''"));
+        assertFalse(index.contains("\"name\":\"</script>\""));
+    }
+
+    @Test
     void generatesSiteWithNoEntries() throws Exception {
         new CatalogSite().generate(List.of(), tempDir);
 

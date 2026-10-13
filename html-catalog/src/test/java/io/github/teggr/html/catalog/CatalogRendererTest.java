@@ -3,6 +3,7 @@ package io.github.teggr.html.catalog;
 import io.github.teggr.html.preview.Preview;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,6 +23,34 @@ class CatalogRendererTest {
         @Preview(value = "Null Result", group = "Basic")
         public String nullResult() {
             return null;
+        }
+
+        @Preview(value = "Throws", group = "Basic")
+        public String throwsException() {
+            throw new IllegalStateException("preview failed");
+        }
+    }
+
+    public static class UnsupportedPreviews {
+        @Preview(value = "Has Argument", group = "Invalid")
+        public String withArgument(String value) {
+            return value;
+        }
+
+        @Preview(value = "Void", group = "Invalid")
+        public void noReturnValue() {
+        }
+    }
+
+    public static class OverloadedPreviews {
+        @Preview(value = "Overloaded", group = "Overloads")
+        public String preview() {
+            return "<p>valid no-argument method</p>";
+        }
+
+        @Preview(value = "Overloaded", group = "Overloads")
+        public String preview(String value) {
+            return value;
         }
     }
 
@@ -88,6 +117,65 @@ class CatalogRendererTest {
 
         RenderedEntry result = results.get(0);
         assertTrue(result.hasError(), "Should capture the no-such-method error");
+    }
+
+    @Test
+    void preservesUnsupportedSignatureAsAnErrorEntry() throws Exception {
+        Method method = UnsupportedPreviews.class.getDeclaredMethod("withArgument", String.class);
+        CatalogEntry entry = new CatalogEntry(
+                "Invalid", "Has Argument", "", 0,
+                UnsupportedPreviews.class.getName(), method.getName(), method.toGenericString()
+        );
+
+        RenderedEntry result = new CatalogRenderer().render(List.of(entry)).get(0);
+
+        assertTrue(result.hasError());
+        assertTrue(result.error().contains("No preview generator supports method"));
+    }
+
+    @Test
+    void rendersOverloadedMethodsByTheirScannedSignature() throws Exception {
+        Method noArgs = OverloadedPreviews.class.getDeclaredMethod("preview");
+        Method withArgs = OverloadedPreviews.class.getDeclaredMethod("preview", String.class);
+        List<CatalogEntry> entries = List.of(
+                new CatalogEntry("Overloads", "Overloaded", "", 0,
+                        OverloadedPreviews.class.getName(), "preview", noArgs.toGenericString()),
+                new CatalogEntry("Overloads", "Overloaded", "", 0,
+                        OverloadedPreviews.class.getName(), "preview", withArgs.toGenericString())
+        );
+
+        List<RenderedEntry> results = new CatalogRenderer().render(entries);
+
+        assertFalse(results.get(0).hasError());
+        assertEquals("<p>valid no-argument method</p>", results.get(0).html());
+        assertTrue(results.get(1).hasError());
+    }
+
+    @Test
+    void preservesVoidMethodAsAnErrorEntry() throws Exception {
+        Method method = UnsupportedPreviews.class.getDeclaredMethod("noReturnValue");
+        CatalogEntry entry = new CatalogEntry(
+                "Invalid", "Void", "", 0,
+                UnsupportedPreviews.class.getName(), method.getName(), method.toGenericString()
+        );
+
+        RenderedEntry result = new CatalogRenderer().render(List.of(entry)).get(0);
+
+        assertTrue(result.hasError());
+        assertTrue(result.error().contains("No preview generator supports method"));
+    }
+
+    @Test
+    void isolatesExceptionThrownByPreviewMethod() {
+        CatalogEntry entry = new CatalogEntry(
+                "Basic", "Throws", "", 0,
+                StringPreviews.class.getName(), "throwsException"
+        );
+
+        RenderedEntry result = new CatalogRenderer().render(List.of(entry)).get(0);
+
+        assertTrue(result.hasError());
+        assertTrue(result.error().contains("preview failed"));
     }
 
     @Test

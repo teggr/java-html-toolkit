@@ -72,7 +72,12 @@ public class CatalogRunner {
 
         long errors = rendered.stream().filter(RenderedEntry::hasError).count();
         if (errors > 0) {
-            System.out.println("[html-catalog] Warning: " + errors + " preview(s) failed to render");
+            System.err.println("[html-catalog] Warning: " + errors + " preview(s) failed to render");
+            rendered.stream()
+                    .filter(RenderedEntry::hasError)
+                    .forEach(entry -> System.err.println("[html-catalog] "
+                            + entry.entry().className() + "#" + entry.entry().methodSignature()
+                            + ": " + entry.error()));
         }
 
         CatalogSite site = new CatalogSite();

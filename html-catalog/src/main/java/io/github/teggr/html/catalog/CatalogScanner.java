@@ -3,13 +3,16 @@ package io.github.teggr.html.catalog;
 import io.github.teggr.html.preview.Preview;
 
 import java.io.File;
+import java.lang.annotation.AnnotationFormatError;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Scans classpath directories for classes that contain methods annotated with
@@ -38,7 +41,7 @@ public class CatalogScanner {
      */
     public List<CatalogEntry> scan(ClassLoader classLoader) {
         List<URL> urls = resolveClasspathUrls(classLoader);
-        List<CatalogEntry> entries = new ArrayList<>();
+        Map<String, CatalogEntry> entries = new LinkedHashMap<>();
 
         for (URL url : urls) {
             if (!"file".equals(url.getProtocol())) {
@@ -47,18 +50,22 @@ public class CatalogScanner {
             try {
                 File file = new File(url.toURI());
                 if (file.isDirectory()) {
-                    entries.addAll(scanDirectory(file, "", classLoader));
+                    for (CatalogEntry entry : scanDirectory(file, "", classLoader)) {
+                        entries.putIfAbsent(entry.className() + "#" + entry.methodSignature(), entry);
+                    }
                 }
                 // JARs are intentionally skipped
-            } catch (Exception ignored) {
-                // Malformed URL or security restriction — skip
+            } catch (Exception e) {
+                warn("Could not inspect classpath entry " + url, e);
             }
         }
 
-        return entries.stream()
+        return entries.values().stream()
                 .sorted(Comparator.comparing(CatalogEntry::group)
                         .thenComparingInt(CatalogEntry::order)
-                        .thenComparing(CatalogEntry::name))
+                        .thenComparing(CatalogEntry::name)
+                        .thenComparing(CatalogEntry::className)
+                        .thenComparing(CatalogEntry::methodSignature))
                 .toList();
     }
 
@@ -92,8 +99,8 @@ public class CatalogScanner {
             }
             try {
                 urls.add(new File(entry).toURI().toURL());
-            } catch (Exception ignored) {
-                // Skip malformed entries
+            } catch (Exception e) {
+                warn("Could not parse classpath entry " + entry, e);
             }
         }
         return urls;
@@ -111,6 +118,7 @@ public class CatalogScanner {
         List<CatalogEntry> entries = new ArrayList<>();
         File[] children = dir.listFiles();
         if (children == null) {
+            warn("Could not list classpath directory " + dir, null);
             return entries;
         }
 
@@ -133,8 +141,8 @@ public class CatalogScanner {
                     // initialize=false avoids running static initialisers during scanning
                     Class<?> clazz = Class.forName(className, false, classLoader);
                     entries.addAll(entriesForClass(clazz));
-                } catch (Throwable ignored) {
-                    // Unloadable class (missing deps, access issues, etc.) — skip
+                } catch (ClassNotFoundException | LinkageError | SecurityException e) {
+                    warn("Could not load class " + className, e);
                 }
             }
         }
@@ -150,8 +158,8 @@ public class CatalogScanner {
         Method[] methods;
         try {
             methods = clazz.getDeclaredMethods();
-        } catch (Throwable ignored) {
-            // getDeclaredMethods can fail when a method's return/param type is missing
+        } catch (LinkageError | RuntimeException | AnnotationFormatError e) {
+            warn("Could not inspect methods on " + clazz.getName(), e);
             return entries;
         }
 
@@ -159,7 +167,8 @@ public class CatalogScanner {
             Preview preview;
             try {
                 preview = method.getAnnotation(Preview.class);
-            } catch (Throwable ignored) {
+            } catch (LinkageError | RuntimeException | AnnotationFormatError e) {
+                warn("Could not read @Preview metadata from " + method, e);
                 continue;
             }
             if (preview == null) {
@@ -174,9 +183,17 @@ public class CatalogScanner {
                     preview.description(),
                     preview.order(),
                     clazz.getName(),
-                    method.getName()
+                    method.getName(),
+                    method.toGenericString()
             ));
         }
         return entries;
+    }
+
+    private void warn(String message, Throwable error) {
+        String detail = error == null
+                ? ""
+                : ": " + (error.getMessage() == null ? error.getClass().getName() : error.getMessage());
+        System.err.println("[html-catalog] Warning: " + message + detail);
     }
 }

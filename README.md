@@ -25,12 +25,14 @@ public String primaryButton() {
 | `value`       | method name          | Display name shown in the VS Code panel and catalog    |
 | `group`       | declaring class name | Catalog group (component family) for sidebar grouping  |
 | `description` | *(empty)*            | Prose description shown below the preview name         |
-| `order`       | `0`                  | Sort order within the group; ties break alphabetically |
+| `order`       | `0`                  | Sort order within the group; ties break by name, then declaring class and method signature |
 
 ## HTML Component Catalog
 
-Add `java-html-toolkit-html-catalog` to your project's dependencies, then configure the
-`exec-maven-plugin` to run `CatalogRunner` after the `test` phase:
+Add `java-html-toolkit-html-catalog` to the project containing the compiled
+`@Preview` methods. The scanner examines classpath directories (including the
+project's `target/classes`) and intentionally skips JARs, so run generation in
+each module whose own compiled classes should appear in the catalog.
 
 ```xml
 <dependency>
@@ -40,10 +42,13 @@ Add `java-html-toolkit-html-catalog` to your project's dependencies, then config
 </dependency>
 ```
 
+Bind `CatalogRunner` to Maven's `verify` phase with the `exec-maven-plugin`:
+
 ```xml
 <plugin>
     <groupId>org.codehaus.mojo</groupId>
     <artifactId>exec-maven-plugin</artifactId>
+    <version>3.5.0</version>
     <executions>
         <execution>
             <id>generate-catalog</id>
@@ -51,22 +56,50 @@ Add `java-html-toolkit-html-catalog` to your project's dependencies, then config
             <goals><goal>java</goal></goals>
             <configuration>
                 <mainClass>io.github.teggr.html.catalog.CatalogRunner</mainClass>
+                <arguments>
+                    <argument>--output-dir</argument>
+                    <argument>${project.build.directory}/html-catalog</argument>
+                </arguments>
             </configuration>
         </execution>
     </executions>
 </plugin>
 ```
 
-Run `./mvnw verify` and open `target/html-catalog/index.html` in a browser.
-The catalog shows a two-panel view: a sidebar listing all groups and components on the
-left, and a live iframe preview on the right with a **Source** tab.
+Run `./mvnw verify` (or `mvn verify` in a consumer project) and open
+`target/html-catalog/index.html` in a browser. The output directory contains the
+catalog shell plus a `frames/` tree with one isolated HTML page per preview.
+The shell lists groups and components beside a live iframe preview; its
+**Source** tab shows the rendered HTML markup, not the Java method source.
 
-You can also run the catalog generator on-demand:
+The default output directory is `target/html-catalog`. Set `--output-dir` in
+the plugin arguments to choose another path. From the consumer project root,
+generate on demand without a phase binding by running:
 
 ```
-mvn exec:java -Dexec.mainClass=io.github.teggr.html.catalog.CatalogRunner \
-              -Dexec.args="--output-dir target/html-catalog"
+./mvnw org.codehaus.mojo:exec-maven-plugin:3.5.0:java \
+  -Dexec.mainClass=io.github.teggr.html.catalog.CatalogRunner \
+  -Dexec.args="--output-dir target/html-catalog"
 ```
+
+Unsupported annotated methods (for example, methods with parameters or `void`
+return type) remain visible as individual entries with a render-error message.
+An exception in one preview is likewise reported on that entry and does not
+prevent other previews from rendering. Repeated discovery of the same
+declaring-class method is deduplicated; different methods with the same display
+name remain separate entries.
+
+The catalog shell's CSS and JavaScript are embedded in `index.html`; there are
+no external shell assets or catalog-theme settings. Preview-specific styling
+can be returned inline in the preview HTML (for example, with a `<style>` tag).
+The generator does not copy project CSS, images, fonts, or other resources into
+the output. If a preview references external assets, make their URLs reachable
+from the generated frame pages and include those assets when publishing the
+catalog. For a static deployment, publish the complete `html-catalog/`
+directory, plus any referenced preview assets, to any static file host. You
+can also share the generated directory as files; no server-side runtime is
+required. Changes to the catalog shell itself require changing the generator
+template; regenerating replaces the generated files.
 
 ## Architecture seam
 
