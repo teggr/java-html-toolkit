@@ -20,5 +20,6 @@
 
     <modules>
         <module>thymeleaf</module>
+        <module>jte</module>
     </modules>
 </project>
