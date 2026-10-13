@@ -60,21 +60,21 @@ VS Code opens a second window labelled **[Extension Development Host]** with the
 
 ### 4. Test on an example project
 
-Inside the Extension Development Host window, open a Maven project that depends on `java-html-preview-api`:
+Inside the Extension Development Host window, open a Maven project that depends on `java-html-toolkit-preview`:
 
 ```xml
 <!-- in your project's pom.xml -->
 <dependency>
-    <groupId>dev.rebelcraft</groupId>
-    <artifactId>java-html-preview-api</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <groupId>io.github.teggr</groupId>
+    <artifactId>java-html-toolkit-preview</artifactId>
+    <version>1.0.3-SNAPSHOT</version>
 </dependency>
 ```
 
 Then annotate a no-arg method with `@Preview`:
 
 ```java
-import dev.rebelcraft.html.preview.Preview;
+import io.github.teggr.html.preview.Preview;
 
 public class MyPreviews {
 
@@ -118,7 +118,7 @@ After saving a change to `src/extension.ts`, reload the Extension Development Ho
 1. **CodeLens** — `PreviewCodeLensProvider` asks VS Code's Java symbol provider for classes and methods, then matches `@Preview` annotations from source text onto those symbols before registering a `▶ Preview` lens for each match.
 2. **Build** — clicking the lens compiles using the configured strategy (`java-html-toolkit.buildStrategy`): Java extension first or Maven first, with fallback to the other path when needed. The compile step is cached until a Java or `pom.xml` change invalidates it.
 3. **Classpath** — classpath resolution also follows `java-html-toolkit.buildStrategy`, with fallback between Java extension classpath and Maven dependency classpath. The resolved classpath is cached and recomputed when `pom.xml` changes.
-4. **Run** — `java -cp <classpath> dev.rebelcraft.html.preview.PreviewRunner <className> <methodName>` is executed and its stdout (the rendered HTML) is displayed in the WebView panel.
+4. **Run** — `java -cp <classpath> io.github.teggr.html.preview.PreviewRunner <className> <methodName>` is executed and its stdout (the rendered HTML) is displayed in the WebView panel.
 5. **Refresh** — when CSS changes, the extension reuses the last rendered HTML and only reinjects styles into the WebView instead of rerunning the preview method.
 
 ## Release and installation
