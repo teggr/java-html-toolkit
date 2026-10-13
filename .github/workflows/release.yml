@@ -151,11 +151,26 @@ jobs:
         working-directory: vscode-extension
         run: npx vsce publish --packagePath "$RUNNER_TEMP/java-html-toolkit-$RELEASE_VERSION.vsix"
 
+      - name: Commit and push release versions
+        id: release_commit
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.release }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- pom.xml ':(glob)**/pom.xml' vscode-extension/package.json vscode-extension/package-lock.json
+          git commit -m "chore: release $RELEASE_VERSION" -m "Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>"
+          git push origin "HEAD:$GITHUB_REF"
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
       - name: Create GitHub Release with VSIX
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_VERSION: ${{ steps.version.outputs.release }}
-        run: gh release create "$RELEASE_VERSION" "$RUNNER_TEMP/java-html-toolkit-$RELEASE_VERSION.vsix" --title "$RELEASE_VERSION" --generate-notes --target "$GITHUB_SHA"
+          RELEASE_COMMIT: ${{ steps.release_commit.outputs.commit }}
+        run: gh release create "$RELEASE_VERSION" "$RUNNER_TEMP/java-html-toolkit-$RELEASE_VERSION.vsix" --title "$RELEASE_VERSION" --generate-notes --target "$RELEASE_COMMIT"
 
       - name: Set next snapshot versions
         run: ./mvnw --no-transfer-progress -Pcentral versions:set -DnextSnapshot -DprocessAllModules -DgenerateBackupPoms=false
@@ -183,8 +198,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -- pom.xml ':(glob)**/pom.xml' vscode-extension/package.json vscode-extension/package-lock.json
           git commit -m "chore: prepare next snapshot after $RELEASE_VERSION" -m "Co-authored-by: Copilot App <223556219+Copilot@users.noreply.github.com>"
           git push origin "HEAD:$GITHUB_REF"
