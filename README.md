@@ -7,7 +7,8 @@ Toolkit for developing, previewing, verifying and testing HTML-producing Java co
 - `vscode-extension`: VS Code extension that discovers `@Preview` methods, compiles projects, and renders HTML. It is built from the root Maven reactor and keeps its npm scripts as the local implementation detail.
 - `preview` (`java-html-toolkit-preview`): annotation (`@Preview`) and runtime entrypoint (`PreviewRunner`), extensible via the `PreviewGenerator` SPI.
 - `preview-thymeleaf` (`java-html-toolkit-preview-thymeleaf`): optional Thymeleaf `PreviewGenerator` adapter for classpath templates and model data.
-- `examples` (`java-html-toolkit-examples`): nested sample applications, including a Spring Boot bookstore with Thymeleaf page, fragment, and `@Preview` examples.
+- `preview-jte` (`java-html-toolkit-preview-jte`): optional JTE `PreviewGenerator` adapter for classpath templates and typed parameters.
+- `examples` (`java-html-toolkit-examples`): nested sample applications, including a Spring Boot Thymeleaf bookstore and a small JTE webapp.
 - `html-catalog` (`java-html-toolkit-html-catalog`): scans the compiled classpath for `@Preview` methods and generates a self-contained, browsable static HTML catalog.
 - `test-docs`: publishable documentation/test support module for preview examples and related HTML tooling fixtures.
 
@@ -120,6 +121,9 @@ not bundle framework-specific template engines:
   `preview-thymeleaf` module and published as
   `io.github.teggr:java-html-toolkit-preview-thymeleaf`; it supports
   `ThymeleafPreview` values containing a classpath template name and model.
+- The optional `preview-jte` module is published as
+  `io.github.teggr:java-html-toolkit-preview-jte`; it supports `JtePreview`
+  values containing a classpath template path and named parameters.
 - The VS Code extension invokes the generic `PreviewRunner`; it does not bundle
   j2html or require any particular adapter. Only add the adapters your project
   uses, and use adapter releases documented as compatible with the selected
@@ -168,6 +172,63 @@ When `java-html-toolkit-preview-thymeleaf` is on the runtime classpath,
 template using the returned model. No custom engine setup or VS Code extension
 configuration is required.
 
+### JTE adapter
+
+Add the optional adapter (which transitively includes the preview API and JTE):
+
+```xml
+<dependency>
+    <groupId>io.github.teggr</groupId>
+    <artifactId>java-html-toolkit-preview-jte</artifactId>
+    <version>1.0.3</version>
+</dependency>
+```
+
+Return `io.github.teggr.html.preview.jte.JtePreview` from a no-argument
+`@Preview` instance method on a class with a no-argument constructor:
+
+```java
+import io.github.teggr.html.preview.Preview;
+import io.github.teggr.html.preview.jte.JtePreview;
+import java.util.Map;
+
+public class GreetingPreview {
+    @Preview("Greeting")
+    public JtePreview greeting() {
+        return new JtePreview("greeting.jte", Map.of("name", "Ada"));
+    }
+}
+```
+
+Create `src/main/resources/templates/greeting.jte`:
+
+```html
+@param String name
+<main>Hello, ${name}!</main>
+```
+
+Template paths are relative to the classpath's `templates/` directory and
+include the `.jte` suffix (for example, `pages/greeting.jte`). Map keys match
+JTE's typed `@param` names; values must have the declared types. Model classes
+and their enclosing classes must be public, with public members accessed by
+templates. Null values are permitted; the parameter map is defensively copied.
+JTE HTML mode escapes interpolated values.
+
+The default embedded engine compiles source templates on demand using a
+**JDK 17+**, not a JRE. Maven's standard resource copying puts templates on the
+runtime classpath, including when packaged in a JAR; no JTE Maven plugin,
+Spring context, custom engine, or extension configuration is required. Generated
+classes use a fresh temporary directory that is removed after rendering.
+Templates and model classes must be available on the preview runtime classpath.
+Templates are trusted Java code, not a sandbox for user-supplied content.
+
+This first version deliberately supports classpath source templates only,
+not application-specific engines or precompiled-only templates. Keep source
+templates in resources even if the application separately precompiles JTE for
+production. `ServiceLoader` discovers the adapter automatically; the generic
+runtime and VS Code extension remain JTE-free unless the project adds this
+dependency. Existing String previews continue to work.
+
 ### Implementing another adapter
 
 An adapter can be maintained in its own module or repository. Depend on
@@ -198,6 +259,27 @@ Open `http://localhost:8080` for the bookstore. The sample previews can also be
 run by the VS Code extension when the example module is opened as a Maven
 project; its previews use the same classpath templates as the running app.
 
+The `examples/jte` module serves a JTE welcome page with the JDK's embedded
+HTTP server. It uses the same `GreetingPreviews#welcome` method, template, and
+parameters for both the webapp and preview. From the repository root:
+
+```sh
+./mvnw -pl examples/jte -am install
+./mvnw -pl examples/jte exec:java \
+  -Dexec.mainClass=io.github.teggr.examples.jte.GreetingApplication
+```
+
+Open `http://localhost:8080` (loopback only); stop with Ctrl+C. To execute its
+preview directly:
+
+```sh
+./mvnw -pl examples/jte exec:java \
+  -Dexec.mainClass=io.github.teggr.html.preview.PreviewRunner \
+  -Dexec.args="io.github.teggr.examples.jte.GreetingPreviews welcome"
+```
+
+Open `examples/jte` as a Maven project in VS Code to use its preview CodeLens.
+
 ## Release automation
 
 Releases are prepared and published through GitHub Actions:
@@ -210,7 +292,7 @@ Releases are prepared and published through GitHub Actions:
 
 - `./mvnw test` runs the full repository build.
 - `./mvnw -pl preview install` installs the preview API into the local Maven repository.
-- `./mvnw -Pcentral -pl preview,preview-thymeleaf,test-docs,html-catalog package` prepares the publishable Java modules with sources, javadocs, and signing configured through the root reactor.
+- `./mvnw -Pcentral -pl preview,preview-thymeleaf,preview-jte,test-docs,html-catalog package` prepares the publishable Java modules with sources, javadocs, and signing configured through the root reactor.
 - `./mvnw -pl vscode-extension package` compiles, tests, and packages the extension into a VSIX.
 
 Versioning is Maven-driven: the root reactor version is the source of truth, and `vscode-extension/package.json` follows that version.

@@ -13,6 +13,7 @@ Java artifacts published to Maven Central:
 - io.github.teggr:java-html-toolkit (parent POM)
 - io.github.teggr:java-html-toolkit-preview
 - io.github.teggr:java-html-toolkit-preview-thymeleaf
+- io.github.teggr:java-html-toolkit-preview-jte
 - io.github.teggr:java-html-toolkit-test-docs
 - io.github.teggr:java-html-toolkit-html-catalog
 
@@ -74,7 +75,7 @@ For the current release this produces version `1.0.3`, followed by
 
 ## Outputs
 
-- Maven Central publication of the parent POM, preview, Thymeleaf adapter, test-docs, and HTML catalog Java artifacts.
+- Maven Central publication of the parent POM, preview, Thymeleaf and JTE adapters, test-docs, and HTML catalog Java artifacts.
 - Marketplace publication of `RebelCraft.java-html-toolkit`.
 - GitHub Release tagged with the release version and containing the packaged VSIX.
 
