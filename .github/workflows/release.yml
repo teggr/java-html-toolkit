@@ -182,8 +182,8 @@ jobs:
       - name: Publish Java artifacts to Maven Central
         env:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,preview-thymeleaf,test-docs,html-catalog -am deploy -DignorePublishedComponents=true "-Dgpg.keyname=$GPG_KEY_ID" "-Dgpg.passphrase=$GPG_PASSPHRASE"
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,preview-thymeleaf,test-docs,html-catalog -am deploy -DignorePublishedComponents=true "-Dgpg.keyname=$GPG_KEY_ID"
 
       - name: Publish VS Code extension to Marketplace
         env:

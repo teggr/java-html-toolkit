@@ -83,10 +83,10 @@ For the current release this produces version `1.0.3`, followed by
 - Maven Central and the Marketplace do not provide a shared transaction, and
   published versions are immutable. If a run fails during either publication,
   inspect both registries before retrying. Maven Central is configured to ignore
-  components that were already published; the Marketplace may reject a repeat
-  publication of a version it already accepted. Resolve which channel still needs
-  publication rather than blindly rerunning or trying to roll back a published
-  artifact.
+  components that were already published and to wait until deployments are
+  published; the Marketplace may reject a repeat publication of a version it
+  already accepted. Resolve which channel still needs publication rather than
+  blindly rerunning or trying to roll back a published artifact.
 - The release-version commit is pushed only after both registries accept the
   release. If that push fails, or a later release/tag/snapshot step fails, inspect
   the selected branch and GitHub tag before taking action. Complete only the
