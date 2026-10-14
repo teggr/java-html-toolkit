@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>io.github.teggr</groupId>
+        <artifactId>java-html-toolkit</artifactId>
+        <version>1.0.3-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>java-html-toolkit-preview-jte</artifactId>
+    <name>java-html-toolkit-preview-jte</name>
+    <description>Optional JTE adapter for the Java HTML Toolkit preview runtime.</description>
+
+    <properties>
+        <jte.version>3.2.4</jte.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.github.teggr</groupId>
+            <artifactId>java-html-toolkit-preview</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>gg.jte</groupId>
+            <artifactId>jte</artifactId>
+            <version>${jte.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

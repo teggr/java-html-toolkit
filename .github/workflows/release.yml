@@ -117,7 +117,7 @@ jobs:
           fi
 
       - name: Check Maven Central metadata
-        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,test-docs,html-catalog -am org.kordamp.maven:pomchecker-maven-plugin:1.14.0:check-maven-central
+        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,preview-jte,test-docs,html-catalog -am org.kordamp.maven:pomchecker-maven-plugin:1.14.0:check-maven-central
 
       - name: Lint VS Code extension
         working-directory: vscode-extension
@@ -142,7 +142,7 @@ jobs:
         env:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,test-docs,html-catalog -am deploy -DignorePublishedComponents=true "-Dgpg.keyname=$GPG_KEY_ID" "-Dgpg.passphrase=$GPG_PASSPHRASE"
+        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,preview-jte,test-docs,html-catalog -am deploy -DignorePublishedComponents=true "-Dgpg.keyname=$GPG_KEY_ID" "-Dgpg.passphrase=$GPG_PASSPHRASE"
 
       - name: Publish VS Code extension to Marketplace
         env:
