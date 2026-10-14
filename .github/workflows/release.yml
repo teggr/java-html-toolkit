@@ -27,6 +27,43 @@ jobs:
           server-username: CENTRAL_USERNAME
           server-password: CENTRAL_PASSWORD
 
+      - name: Allow Maven Central credential origin
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          settings_path = Path.home() / ".m2" / "settings.xml"
+          tree = ET.parse(settings_path)
+          root = tree.getroot()
+          namespace = root.tag.partition("}")[0][1:] if root.tag.startswith("{") else ""
+          tag = lambda name: f"{{{namespace}}}{name}" if namespace else name
+
+          servers = root.find(tag("servers"))
+          server = next(
+              (server for server in servers.findall(tag("server"))
+               if server.findtext(tag("id")) == "central"),
+              None,
+          ) if servers is not None else None
+          if server is None:
+              raise RuntimeError("Maven server 'central' was not configured.")
+
+          origins = server.find(tag("repositoryOrigins"))
+          if origins is None:
+              origins = ET.Element(tag("repositoryOrigins"))
+              server_id = server.find(tag("id"))
+              server.insert(list(server).index(server_id) if server_id is not None else len(server), origins)
+          if not any((origin.text or "").strip() == "https://central.sonatype.com"
+                     for origin in origins.findall(tag("repositoryOrigin"))):
+              ET.SubElement(origins, tag("repositoryOrigin")).text = "https://central.sonatype.com"
+
+          if namespace:
+              ET.register_namespace("", namespace)
+          tree.write(settings_path, encoding="UTF-8", xml_declaration=True)
+          settings_path.chmod(0o600)
+          PY
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
