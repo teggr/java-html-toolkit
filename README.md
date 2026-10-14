@@ -210,7 +210,7 @@ Releases are prepared and published through GitHub Actions:
 
 - `./mvnw test` runs the full repository build.
 - `./mvnw -pl preview install` installs the preview API into the local Maven repository.
-- `./mvnw -Pcentral -pl preview,test-docs,html-catalog package` prepares the publishable Java modules with sources, javadocs, and signing configured through the root reactor.
+- `./mvnw -Pcentral -pl preview,preview-thymeleaf,test-docs,html-catalog package` prepares the publishable Java modules with sources, javadocs, and signing configured through the root reactor.
 - `./mvnw -pl vscode-extension package` compiles, tests, and packages the extension into a VSIX.
 
 Versioning is Maven-driven: the root reactor version is the source of truth, and `vscode-extension/package.json` follows that version.

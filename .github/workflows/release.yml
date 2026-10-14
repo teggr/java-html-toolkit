@@ -7,7 +7,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: java-html-toolkit-release
+  group: maven-central-release
   cancel-in-progress: false
 
 jobs:
@@ -16,60 +16,6 @@ jobs:
     steps:
       - name: Check out selected branch
         uses: actions/checkout@v4
-
-      - name: Set up Java 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '17'
-          cache: maven
-          server-id: central
-          server-username: CENTRAL_USERNAME
-          server-password: CENTRAL_PASSWORD
-
-      - name: Allow Maven Central credential origin
-        shell: bash
-        run: |
-          python3 <<'PY'
-          from pathlib import Path
-          import xml.etree.ElementTree as ET
-
-          settings_path = Path.home() / ".m2" / "settings.xml"
-          tree = ET.parse(settings_path)
-          root = tree.getroot()
-          namespace = root.tag.partition("}")[0][1:] if root.tag.startswith("{") else ""
-          tag = lambda name: f"{{{namespace}}}{name}" if namespace else name
-
-          servers = root.find(tag("servers"))
-          server = next(
-              (server for server in servers.findall(tag("server"))
-               if server.findtext(tag("id")) == "central"),
-              None,
-          ) if servers is not None else None
-          if server is None:
-              raise RuntimeError("Maven server 'central' was not configured.")
-
-          origins = server.find(tag("repositoryOrigins"))
-          if origins is None:
-              origins = ET.Element(tag("repositoryOrigins"))
-              server_id = server.find(tag("id"))
-              server.insert(list(server).index(server_id) if server_id is not None else len(server), origins)
-          if not any((origin.text or "").strip() == "https://central.sonatype.com"
-                     for origin in origins.findall(tag("repositoryOrigin"))):
-              ET.SubElement(origins, tag("repositoryOrigin")).text = "https://central.sonatype.com"
-
-          if namespace:
-              ET.register_namespace("", namespace)
-          tree.write(settings_path, encoding="UTF-8", xml_declaration=True)
-          settings_path.chmod(0o600)
-          PY
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: npm
-          cache-dependency-path: vscode-extension/package-lock.json
 
       - name: Check release secrets
         env:
@@ -88,6 +34,64 @@ jobs:
               exit 1
             fi
           done
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Configure Maven Central credentials
+        env:
+          CENTRAL_USERNAME: ${{ secrets.CENTRAL_USERNAME }}
+          CENTRAL_PASSWORD: ${{ secrets.CENTRAL_PASSWORD }}
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          import os
+
+          settings_path = Path.home() / ".m2" / "settings.xml"
+          if settings_path.exists():
+              tree = ET.parse(settings_path)
+              root = tree.getroot()
+          else:
+              root = ET.Element("{http://maven.apache.org/SETTINGS/1.2.0}settings")
+              tree = ET.ElementTree(root)
+          namespace = root.tag.partition("}")[0][1:] if root.tag.startswith("{") else ""
+          tag = lambda name: f"{{{namespace}}}{name}" if namespace else name
+
+          servers = root.find(tag("servers"))
+          if servers is None:
+              servers = ET.SubElement(root, tag("servers"))
+          server = next((entry for entry in servers.findall(tag("server"))
+                         if entry.findtext(tag("id")) == "central"), None)
+          if server is None:
+              server = ET.SubElement(servers, tag("server"))
+              ET.SubElement(server, tag("id")).text = "central"
+          for name, value in (("username", os.environ["CENTRAL_USERNAME"]),
+                              ("password", os.environ["CENTRAL_PASSWORD"])):
+              element = server.find(tag(name))
+              if element is None:
+                  element = ET.SubElement(server, tag(name))
+              element.text = value
+
+          if namespace:
+              ET.register_namespace("", namespace)
+          settings_path.parent.mkdir(parents=True, exist_ok=True)
+          tree.write(settings_path, encoding="UTF-8", xml_declaration=True)
+          settings_path.chmod(0o600)
+          PY
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: vscode-extension/package-lock.json
 
       - name: Determine release version
         id: version
@@ -154,7 +158,7 @@ jobs:
           fi
 
       - name: Check Maven Central metadata
-        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,test-docs,html-catalog -am org.kordamp.maven:pomchecker-maven-plugin:1.14.0:check-maven-central
+        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,preview-thymeleaf,test-docs,html-catalog -am org.kordamp.maven:pomchecker-maven-plugin:1.14.0:check-maven-central
 
       - name: Lint VS Code extension
         working-directory: vscode-extension
@@ -179,7 +183,7 @@ jobs:
         env:
           GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,test-docs,html-catalog -am deploy -DignorePublishedComponents=true "-Dgpg.keyname=$GPG_KEY_ID" "-Dgpg.passphrase=$GPG_PASSPHRASE"
+        run: ./mvnw --no-transfer-progress -Pcentral -pl preview,preview-thymeleaf,test-docs,html-catalog -am deploy -DignorePublishedComponents=true "-Dgpg.keyname=$GPG_KEY_ID" "-Dgpg.passphrase=$GPG_PASSPHRASE"
 
       - name: Publish VS Code extension to Marketplace
         env:
